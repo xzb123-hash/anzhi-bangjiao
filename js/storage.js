@@ -1,435 +1,336 @@
 /**
- * 数据存储层 - 使用 localStorage 模拟后端数据库
- * 提供各端口数据的增删改查操作
+ * 安置帮教综合管理平台 - 数据存储层
+ * 使用 localStorage 模拟后端数据存储
  */
 const Storage = (function () {
   const DB_KEY = 'anzhuang_bangjiao_db';
 
-  // 默认初始数据
-  const DEFAULT_DATA = {
-    // 用户账号 (角色: police/prison/judicial/released/volunteer)
-    users: [
-      { id: 'u_police_1', username: 'police', password: '123456', role: 'police', name: '张警官', org: '市公安局' },
-      { id: 'u_prison_1', username: 'prison', password: '123456', role: 'prison', name: '李狱警', org: '市监狱' },
-      { id: 'u_judicial_1', username: 'judicial', password: '123456', role: 'judicial', name: '王司法', org: '市司法局' },
-      { id: 'u_volunteer_1', username: 'volunteer', password: '123456', role: 'volunteer', name: '志愿者公共账号', org: '社会志愿者协会' },
-      // 刑释人员账号
-      { id: 'u_released_1', username: 'released1', password: '123456', role: 'released', personId: 'p_1', name: '陈某某' },
-      { id: 'u_released_2', username: 'released2', password: '123456', role: 'released', personId: 'p_2', name: '林某某' },
-      { id: 'u_released_3', username: 'released3', password: '123456', role: 'released', personId: 'p_3', name: '黄某某' }
-    ],
-
-    // 刑释人员档案
-    persons: [
-      {
-        id: 'p_1',
-        name: '陈某某',
-        gender: '男',
-        age: 35,
-        idCard: '3301**********1234',
-        crime: '盗窃罪',
-        sentence: '有期徒刑3年',
-        releaseDate: '2025-09-01',
-        prisonPerformance: '表现良好，积极参加劳动改造',
-        riskLevel: 'low', // low / high
-        serviceType: 'flexible', // flexible(灵活) / strict(严格)
-        serviceChoiceMade: true,
-        address: '杭州市西湖区',
-        occupation: '待业',
-        maritalStatus: '未婚',
-        createdAt: '2025-08-01',
-        createdBy: 'u_police_1'
-      },
-      {
-        id: 'p_2',
-        name: '林某某',
-        gender: '男',
-        age: 42,
-        idCard: '3301**********5678',
-        crime: '故意伤害罪',
-        sentence: '有期徒刑5年',
-        releaseDate: '2025-08-25',
-        prisonPerformance: '表现一般，曾有一次违纪',
-        riskLevel: 'high',
-        serviceType: 'strict',
-        serviceChoiceMade: true,
-        address: '宁波市海曙区',
-        occupation: '个体经营',
-        maritalStatus: '离异',
-        createdAt: '2025-07-15',
-        createdBy: 'u_police_1'
-      },
-      {
-        id: 'p_3',
-        name: '黄某某',
-        gender: '女',
-        age: 28,
-        idCard: '3301**********9012',
-        crime: '诈骗罪',
-        sentence: '有期徒刑2年',
-        releaseDate: '2025-08-10',
-        prisonPerformance: '表现优秀，获得减刑',
-        riskLevel: 'low',
-        serviceType: 'flexible',
-        serviceChoiceMade: true,
-        address: '温州市鹿城区',
-        occupation: '公司职员',
-        maritalStatus: '已婚',
-        createdAt: '2025-06-20',
-        createdBy: 'u_police_1'
-      }
-    ],
-
-    // 接送确认提醒 (监狱 -> 司法)
-    reminders: [
-      {
-        id: 'r_1',
-        personId: 'p_2',
-        personName: '林某某',
-        releaseDate: '2025-08-25',
-        stage: '30day', // 30day / 15day / 7day
-        message: '林某某将于2025-08-25刑满释放，请司法行政部门确认接送安排。',
-        confirmed: false,
-        confirmedAt: null,
-        createdAt: '2025-07-26',
-        createdBy: 'u_prison_1'
-      },
-      {
-        id: 'r_2',
-        personId: 'p_3',
-        personName: '黄某某',
-        releaseDate: '2025-08-10',
-        stage: '15day',
-        message: '黄某某将于2025-08-10刑满释放，请司法行政部门确认接送安排。',
-        confirmed: true,
-        confirmedAt: '2025-07-30',
-        createdAt: '2025-07-26',
-        createdBy: 'u_prison_1'
-      }
-    ],
-
-    // 政策信息
-    policies: [
-      {
-        id: 'pol_1',
-        title: '关于进一步做好刑满释放人员安置帮教工作的通知',
-        content: '为切实做好刑满释放人员安置帮教工作，促进其顺利融入社会，现就有关事项通知如下：一、加强衔接配合...二、落实帮扶措施...三、强化跟踪管理...',
-        publishDate: '2025-07-01',
-        publishedBy: 'u_judicial_1'
-      },
-      {
-        id: 'pol_2',
-        title: '2025年度安置帮教专项资金使用管理办法',
-        content: '为规范安置帮教专项资金使用管理，提高资金使用效益，制定本办法。资金主要用于：就业培训、临时救助、心理辅导等。',
-        publishDate: '2025-06-15',
-        publishedBy: 'u_judicial_1'
-      }
-    ],
-
-    // 企业招聘信息 (由人社部门发送，司法部门筛选上传)
-    jobs: [
-      {
-        id: 'j_1',
-        company: '杭州XX制造有限公司',
-        position: '普工',
-        salary: '4000-6000元/月',
-        location: '杭州市余杭区',
-        requirement: '身体健康，能适应倒班，无犯罪记录要求（安置帮教对象优先）',
-        publishDate: '2025-08-01',
-        publishedBy: 'u_judicial_1'
-      },
-      {
-        id: 'j_2',
-        company: '宁波YY餐饮集团',
-        position: '后厨帮工',
-        salary: '3500-5000元/月',
-        location: '宁波市鄞州区',
-        requirement: '吃苦耐劳，有健康证，欢迎安置帮教对象应聘',
-        publishDate: '2025-07-28',
-        publishedBy: 'u_judicial_1'
-      }
-    ],
-
-    // 疑问 (刑释人员 -> 志愿者)
-    questions: [
-      {
-        id: 'q_1',
-        personId: 'p_1',
-        personName: '陈某某',
-        category: '心理', // 心理 / 法律
-        title: '出狱后总是感觉焦虑，怎么办？',
-        content: '刑满释放回家后，总觉得周围人用异样眼光看我，晚上失眠，心情低落，请问该如何调整？',
-        createdAt: '2025-08-05',
-        status: 'replied', // pending / replied
-        reply: '您好，感谢您的信任。您所感受到的焦虑和失眠是刑释人员回归社会初期常见的心理反应，建议您：1.保持规律作息；2.主动与家人沟通；3.可到当地心理咨询机构接受专业辅导。如持续不适，可联系司法部门协调就医。',
-        repliedAt: '2025-08-08',
-        repliedBy: 'u_volunteer_1',
-        replierName: '心理咨询师 张医生'
-      },
-      {
-        id: 'q_2',
-        personId: 'p_3',
-        personName: '黄某某',
-        category: '法律',
-        title: '前科记录可以申请消除吗？',
-        content: '请问我的犯罪记录是否可以申请消除？对今后找工作有什么影响？',
-        createdAt: '2025-08-09',
-        status: 'pending',
-        reply: null,
-        repliedAt: null,
-        repliedBy: null,
-        replierName: null
-      }
-    ],
-
-    // 信息更新记录 (特定时间节点)
-    updates: [
-      {
-        id: 'upd_1',
-        personId: 'p_3',
-        personName: '黄某某',
-        timePoint: '1month', // 1month/3month/6month/1year/3year/5year
-        timePointLabel: '刑满释放后1个月',
-        address: '温州市鹿城区',
-        occupation: '公司职员',
-        maritalStatus: '已婚',
-        submittedAt: '2025-08-10'
-      }
-    ],
-
-    // 操作日志
-    logs: []
-  };
-
-  function load() {
+  function getDB() {
     const raw = localStorage.getItem(DB_KEY);
-    if (!raw) {
-      save(DEFAULT_DATA);
-      return JSON.parse(JSON.stringify(DEFAULT_DATA));
+    if (raw) {
+      try { return JSON.parse(raw); } catch (e) {}
     }
-    try {
-      return JSON.parse(raw);
-    } catch (e) {
-      save(DEFAULT_DATA);
-      return JSON.parse(JSON.stringify(DEFAULT_DATA));
-    }
+    return initDB();
   }
 
-  function save(data) {
-    localStorage.setItem(DB_KEY, JSON.stringify(data));
+  function saveDB(db) {
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
   }
 
-  let data = load();
+  function initDB() {
+    const today = new Date();
+    const d = (offset) => {
+      const dt = new Date(today);
+      dt.setDate(dt.getDate() + offset);
+      return dt.toISOString().slice(0, 10);
+    };
 
-  function persist() {
-    save(data);
-  }
-
-  function genId(prefix) {
-    return prefix + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const db = {
+      users: [
+        { id: 'u_police', username: 'police', password: '123456', name: '公安管理员', role: 'police', org: '市公安局' },
+        { id: 'u_prison', username: 'prison', password: '123456', name: '监狱管理员', role: 'prison', org: '市第一监狱' },
+        { id: 'u_judicial', username: 'judicial', password: '123456', name: '司法管理员', role: 'judicial', org: '市司法局' },
+        { id: 'u_volunteer', username: 'volunteer', password: '123456', name: '志愿者账号', role: 'volunteer', org: '社会志愿者协会' },
+        { id: 'u_rel1', username: 'released1', password: '123456', name: '张三', role: 'released', personId: 'p1' },
+        { id: 'u_rel2', username: 'released2', password: '123456', name: '李四', role: 'released', personId: 'p2' },
+        { id: 'u_rel3', username: 'released3', password: '123456', name: '王五', role: 'released', personId: 'p3' }
+      ],
+      persons: [
+        {
+          id: 'p1', name: '张三', gender: '男', age: 28, idCard: '110101199601011234',
+          crime: '盗窃罪', sentence: '有期徒刑2年', releaseDate: d(-30),
+          prisonPerformance: '表现良好，积极参加教育改造，无违规记录',
+          riskLevel: 'low', serviceType: 'flexible', serviceChoiceMade: true,
+          address: '北京市朝阳区建国路88号', occupation: '待业', maritalStatus: '未婚',
+          createdBy: 'u_police', createdAt: d(-60)
+        },
+        {
+          id: 'p2', name: '李四', gender: '男', age: 35, idCard: '110105198905055678',
+          crime: '故意伤害罪', sentence: '有期徒刑3年6个月', releaseDate: d(-15),
+          prisonPerformance: '表现一般，有过1次违规，经教育后改正',
+          riskLevel: 'high', serviceType: 'strict', serviceChoiceMade: true,
+          address: '北京市海淀区中关村大街1号', occupation: '待业', maritalStatus: '已婚',
+          createdBy: 'u_police', createdAt: d(-90)
+        },
+        {
+          id: 'p3', name: '王五', gender: '男', age: 22, idCard: '110108200203039012',
+          crime: '寻衅滋事罪', sentence: '有期徒刑1年6个月', releaseDate: d(-7),
+          prisonPerformance: '表现较差，有3次违规记录，需重点关注',
+          riskLevel: null, serviceType: null, serviceChoiceMade: false,
+          address: '北京市西城区西长安街1号', occupation: '待业', maritalStatus: '未婚',
+          createdBy: 'u_police', createdAt: d(-50)
+        }
+      ],
+      updates: [
+        { id: 'up1', personId: 'p1', timePoint: '1month', timePointLabel: '刑满释放后1个月',
+          address: '北京市朝阳区建国路88号', occupation: '销售员', maritalStatus: '未婚',
+          submittedAt: d(-25) }
+      ],
+      questions: [
+        { id: 'q1', personId: 'p1', personName: '张三', category: '心理',
+          title: '如何调整出狱后的心态', content: '出狱后总感觉无法融入社会，经常焦虑失眠，请问如何调整？',
+          status: 'replied', reply: '建议您多参加社区组织的互助活动，逐步建立自信心。如失眠严重，可前往医院心理科就诊。同时保持规律作息，适当运动。',
+          replierName: '心理咨询师 刘医生', repliedAt: d(-3), createdAt: d(-10) },
+        { id: 'q2', personId: 'p2', personName: '李四', category: '法律',
+          title: '劳动合同纠纷咨询', content: '我在工厂工作了3个月，老板一直不签合同，也不交社保，该怎么办？',
+          status: 'pending', reply: null, replierName: null, repliedAt: null, createdAt: d(-5) }
+      ],
+      reminders: [
+        { id: 'r1', personId: 'p2', personName: '李四', releaseDate: d(-15),
+          stage: '30day', message: '李四将于' + d(-15) + '刑满释放，请司法行政部门确认接送安排。',
+          confirmed: true, confirmedAt: d(-20), createdBy: 'u_prison', createdAt: d(-45) }
+      ],
+      jobs: [
+        { id: 'j1', company: '华为技术有限公司', position: '装配工', salary: '4500-6000元/月',
+          location: '深圳', requirement: '身体健康，能吃苦耐劳，无不良记录', publishDate: d(-5), createdBy: 'u_judicial' },
+        { id: 'j2', company: '京东物流', position: '分拣员', salary: '3500-5000元/月',
+          location: '北京', requirement: '能适应夜班，工作认真负责', publishDate: d(-3), createdBy: 'u_judicial' }
+      ],
+      policies: [
+        { id: 'pol1', title: '关于进一步做好刑释人员安置帮教工作的通知',
+          content: '为进一步加强刑释人员安置帮教工作，现就有关事项通知如下：\n一、提高认识，加强组织领导\n二、完善衔接机制，确保无缝对接\n三、强化就业帮扶，拓宽就业渠道\n四、加强心理辅导，促进顺利回归\n五、完善信息管理，建立跟踪机制',
+          publishDate: d(-10), createdBy: 'u_judicial' },
+        { id: 'pol2', title: '2026年安置帮教工作要点',
+          content: '2026年安置帮教工作将重点围绕以下几个方面展开：\n1. 推进"阳光帮扶"工程\n2. 加强就业技能培训\n3. 完善社会力量参与机制\n4. 强化信息化管理手段',
+          publishDate: d(-2), createdBy: 'u_judicial' }
+      ],
+      logs: []
+    };
+    saveDB(db);
+    return db;
   }
 
   function addLog(action, user) {
-    data.logs.unshift({
-      id: genId('log'),
-      action,
+    const db = getDB();
+    db.logs.unshift({
+      time: new Date().toLocaleString('zh-CN'),
       user: user ? user.name : '系统',
-      time: new Date().toLocaleString('zh-CN')
+      action
     });
-    if (data.logs.length > 200) data.logs.length = 200;
-    persist();
+    if (db.logs.length > 200) db.logs.pop();
+    saveDB(db);
   }
 
-  // ===== 公开 API =====
-  return {
-    reset() {
-      data = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      persist();
-    },
-    getData() { return data; },
+  function genId(prefix) {
+    return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  }
 
-    // 用户认证
-    login(username, password) {
-      const u = data.users.find(x => x.username === username && x.password === password);
-      return u ? JSON.parse(JSON.stringify(u)) : null;
-    },
+  // ===== 用户认证 =====
+  function login(username, password) {
+    const db = getDB();
+    const u = db.users.find(x => x.username === username && x.password === password);
+    return u || null;
+  }
 
-    getCurrentUser() {
-      const raw = sessionStorage.getItem('current_user');
-      return raw ? JSON.parse(raw) : null;
-    },
-    setCurrentUser(u) {
-      if (u) sessionStorage.setItem('current_user', JSON.stringify(u));
-      else sessionStorage.removeItem('current_user');
-    },
+  function getCurrentUser() {
+    const raw = sessionStorage.getItem('anzhuang_current_user');
+    return raw ? JSON.parse(raw) : null;
+  }
 
-    // 刑释人员
-    getPersons() { return JSON.parse(JSON.stringify(data.persons)); },
-    getPerson(id) { return JSON.parse(JSON.stringify(data.persons.find(p => p.id === id))); },
-    addPerson(p, user) {
-      p.id = genId('p_');
-      p.createdAt = new Date().toISOString().slice(0, 10);
-      p.createdBy = user.id;
-      data.persons.push(p);
-      // 自动传送至监狱：在日志中记录
-      addLog(`公安上传刑释人员【${p.name}】档案并传送至监狱系统`, user);
-      persist();
-      return JSON.parse(JSON.stringify(p));
-    },
-    updatePerson(id, patch, user) {
-      const p = data.persons.find(x => x.id === id);
-      if (!p) return null;
-      Object.assign(p, patch);
-      persist();
-      return JSON.parse(JSON.stringify(p));
-    },
+  function setCurrentUser(user) {
+    if (user) sessionStorage.setItem('anzhuang_current_user', JSON.stringify(user));
+    else sessionStorage.removeItem('anzhuang_current_user');
+  }
 
-    // 提醒 (监狱->司法)
-    getReminders() { return JSON.parse(JSON.stringify(data.reminders)); },
-    getPendingReminders() {
-      return JSON.parse(JSON.stringify(data.reminders.filter(r => !r.confirmed)));
-    },
-    addReminder(r, user) {
-      r.id = genId('r_');
-      r.confirmed = false;
-      r.confirmedAt = null;
-      r.createdAt = new Date().toISOString().slice(0, 10);
-      r.createdBy = user.id;
-      data.reminders.push(r);
-      addLog(`监狱发送【${r.personName}】接送确认提醒至司法行政部门`, user);
-      persist();
-      return JSON.parse(JSON.stringify(r));
-    },
-    confirmReminder(id, user) {
-      const r = data.reminders.find(x => x.id === id);
-      if (!r) return null;
-      r.confirmed = true;
-      r.confirmedAt = new Date().toLocaleString('zh-CN');
-      addLog(`司法行政部门确认【${r.personName}】接送安排`, user);
-      persist();
-      return JSON.parse(JSON.stringify(r));
-    },
+  // ===== 人员档案 =====
+  function getPersons() { return getDB().persons; }
 
-    // 风险评级
-    setRiskLevel(personId, level, user) {
-      const p = data.persons.find(x => x.id === personId);
-      if (!p) return null;
-      p.riskLevel = level;
-      // 高风险默认严格服务
-      if (level === 'high') {
-        p.serviceType = 'strict';
-        p.serviceChoiceMade = true;
-      }
-      addLog(`司法行政部门将【${p.name}】风险评级设为${level === 'low' ? '低风险' : '高风险'}`, user);
-      persist();
-      return JSON.parse(JSON.stringify(p));
-    },
+  function getPerson(id) {
+    return getDB().persons.find(p => p.id === id);
+  }
 
-    // 招聘信息
-    getJobs() { return JSON.parse(JSON.stringify(data.jobs)); },
-    addJob(j, user) {
-      j.id = genId('j_');
-      j.publishDate = new Date().toISOString().slice(0, 10);
-      j.publishedBy = user.id;
-      data.jobs.push(j);
-      addLog(`司法行政部门发布招聘信息【${j.company}-${j.position}】`, user);
-      persist();
-      return JSON.parse(JSON.stringify(j));
-    },
-    deleteJob(id, user) {
-      const idx = data.jobs.findIndex(x => x.id === id);
-      if (idx >= 0) {
-        const j = data.jobs[idx];
-        data.jobs.splice(idx, 1);
-        addLog(`司法行政部门删除招聘信息【${j.company}-${j.position}】`, user);
-        persist();
-        return true;
-      }
-      return false;
-    },
+  function addPerson(person, user) {
+    const db = getDB();
+    const p = {
+      id: genId('p'),
+      ...person,
+      createdBy: user ? user.id : null,
+      createdAt: new Date().toISOString().slice(0, 10)
+    };
+    db.persons.push(p);
+    saveDB(db);
+    addLog('上传档案：' + p.name, user);
+    return p;
+  }
 
-    // 政策信息
-    getPolicies() { return JSON.parse(JSON.stringify(data.policies)); },
-    addPolicy(p, user) {
-      p.id = genId('pol_');
-      p.publishDate = new Date().toISOString().slice(0, 10);
-      p.publishedBy = user.id;
-      data.policies.push(p);
-      addLog(`司法行政部门发布政策【${p.title}】`, user);
-      persist();
-      return JSON.parse(JSON.stringify(p));
-    },
+  function updatePerson(id, updates, user) {
+    const db = getDB();
+    const p = db.persons.find(x => x.id === id);
+    if (p) {
+      Object.assign(p, updates);
+      saveDB(db);
+      addLog('更新档案：' + p.name, user);
+    }
+    return p;
+  }
 
-    // 疑问
-    getQuestions() { return JSON.parse(JSON.stringify(data.questions)); },
-    getPendingQuestions() {
-      return JSON.parse(JSON.stringify(data.questions.filter(q => q.status === 'pending')));
-    },
-    getQuestionsByPerson(personId) {
-      return JSON.parse(JSON.stringify(data.questions.filter(q => q.personId === personId)));
-    },
-    addQuestion(q, user) {
-      q.id = genId('q_');
-      q.createdAt = new Date().toISOString().slice(0, 10);
-      q.status = 'pending';
-      q.reply = null;
-      q.repliedAt = null;
-      q.repliedBy = null;
-      q.replierName = null;
-      const p = data.persons.find(x => x.id === q.personId);
-      q.personName = p ? p.name : '未知';
-      data.questions.push(q);
-      addLog(`刑释人员【${q.personName}】提交${q.category}类疑问`, user);
-      persist();
-      return JSON.parse(JSON.stringify(q));
-    },
-    replyQuestion(id, reply, replierName, user) {
-      const q = data.questions.find(x => x.id === id);
-      if (!q) return null;
-      q.reply = reply;
-      q.repliedAt = new Date().toLocaleString('zh-CN');
-      q.repliedBy = user.id;
-      q.replierName = replierName;
+  function setRiskLevel(id, level, user) {
+    const p = updatePerson(id, { riskLevel: level }, user);
+    addLog('评定' + p.name + '为' + (level === 'high' ? '高风险' : '低风险'), user);
+  }
+
+  function chooseService(id, type, user) {
+    const p = updatePerson(id, { serviceType: type, serviceChoiceMade: true }, user);
+    addLog(p.name + '选择' + (type === 'strict' ? '严格' : '灵活') + '帮教服务', user);
+  }
+
+  // ===== 信息更新 =====
+  function getUpdatesByPerson(personId) {
+    return getDB().updates.filter(u => u.personId === personId);
+  }
+
+  function addUpdate(update, user) {
+    const db = getDB();
+    const u = {
+      id: genId('up'),
+      ...update,
+      submittedAt: new Date().toISOString().slice(0, 10)
+    };
+    db.updates.push(u);
+    saveDB(db);
+    addLog('提交信息更新：' + u.timePointLabel, user);
+    return u;
+  }
+
+  // ===== 疑问 =====
+  function getQuestions() { return getDB().questions; }
+
+  function getQuestionsByPerson(personId) {
+    return getDB().questions.filter(q => q.personId === personId);
+  }
+
+  function getPendingQuestions() {
+    return getDB().questions.filter(q => q.status === 'pending');
+  }
+
+  function addQuestion(question, user) {
+    const db = getDB();
+    const person = db.persons.find(p => p.id === question.personId);
+    const q = {
+      id: genId('q'),
+      ...question,
+      personName: person ? person.name : '未知',
+      status: 'pending',
+      reply: null,
+      replierName: null,
+      repliedAt: null,
+      createdAt: new Date().toISOString().slice(0, 10)
+    };
+    db.questions.push(q);
+    saveDB(db);
+    addLog('提交疑问：' + q.title, user);
+    return q;
+  }
+
+  function replyQuestion(id, reply, replierName, user) {
+    const db = getDB();
+    const q = db.questions.find(x => x.id === id);
+    if (q) {
       q.status = 'replied';
-      addLog(`志愿者回复【${q.personName}】的疑问`, user);
-      persist();
-      return JSON.parse(JSON.stringify(q));
-    },
+      q.reply = reply;
+      q.replierName = replierName;
+      q.repliedAt = new Date().toISOString().slice(0, 10);
+      saveDB(db);
+      addLog('回复疑问：' + q.title, user);
+    }
+    return q;
+  }
 
-    // 信息更新
-    getUpdates() { return JSON.parse(JSON.stringify(data.updates)); },
-    getUpdatesByPerson(personId) {
-      return JSON.parse(JSON.stringify(data.updates.filter(u => u.personId === personId)));
-    },
-    addUpdate(u, user) {
-      u.id = genId('upd_');
-      u.submittedAt = new Date().toLocaleString('zh-CN');
-      const p = data.persons.find(x => x.id === u.personId);
-      u.personName = p ? p.name : '未知';
-      // 同步更新人员基本信息
-      if (p) {
-        if (u.address) p.address = u.address;
-        if (u.occupation) p.occupation = u.occupation;
-        if (u.maritalStatus) p.maritalStatus = u.maritalStatus;
-      }
-      data.updates.push(u);
-      addLog(`刑释人员【${u.personName}】更新${u.timePointLabel}信息`, user);
-      persist();
-      return JSON.parse(JSON.stringify(u));
-    },
+  // ===== 接送确认提醒 =====
+  function getReminders() { return getDB().reminders; }
 
-    // 服务选择 (刑释人员一个月内选择)
-    chooseService(personId, serviceType, user) {
-      const p = data.persons.find(x => x.id === personId);
-      if (!p) return null;
-      p.serviceType = serviceType;
-      p.serviceChoiceMade = true;
-      addLog(`刑释人员【${p.name}】选择${serviceType === 'flexible' ? '灵活' : '严格'}安置帮教服务`, user);
-      persist();
-      return JSON.parse(JSON.stringify(p));
-    },
+  function getPendingReminders() {
+    return getDB().reminders.filter(r => !r.confirmed);
+  }
 
-    // 日志
-    getLogs() { return JSON.parse(JSON.stringify(data.logs)); }
+  function addReminder(reminder, user) {
+    const db = getDB();
+    const r = {
+      id: genId('r'),
+      ...reminder,
+      confirmed: false,
+      confirmedAt: null,
+      createdBy: user ? user.id : null,
+      createdAt: new Date().toISOString().slice(0, 10)
+    };
+    db.reminders.push(r);
+    saveDB(db);
+    addLog('发送接送确认提醒：' + r.personName, user);
+    return r;
+  }
+
+  function confirmReminder(id, user) {
+    const db = getDB();
+    const r = db.reminders.find(x => x.id === id);
+    if (r) {
+      r.confirmed = true;
+      r.confirmedAt = new Date().toISOString().slice(0, 10);
+      saveDB(db);
+      addLog('确认接送：' + r.personName, user);
+    }
+    return r;
+  }
+
+  // ===== 招聘信息 =====
+  function getJobs() { return getDB().jobs; }
+
+  function addJob(job, user) {
+    const db = getDB();
+    const j = {
+      id: genId('j'),
+      ...job,
+      publishDate: new Date().toISOString().slice(0, 10),
+      createdBy: user ? user.id : null
+    };
+    db.jobs.push(j);
+    saveDB(db);
+    addLog('发布招聘：' + j.company, user);
+    return j;
+  }
+
+  function deleteJob(id, user) {
+    const db = getDB();
+    const idx = db.jobs.findIndex(x => x.id === id);
+    if (idx >= 0) {
+      addLog('删除招聘：' + db.jobs[idx].company, user);
+      db.jobs.splice(idx, 1);
+      saveDB(db);
+    }
+  }
+
+  // ===== 政策 =====
+  function getPolicies() { return getDB().policies; }
+
+  function addPolicy(policy, user) {
+    const db = getDB();
+    const p = {
+      id: genId('pol'),
+      ...policy,
+      publishDate: new Date().toISOString().slice(0, 10),
+      createdBy: user ? user.id : null
+    };
+    db.policies.push(p);
+    saveDB(db);
+    addLog('发布政策：' + p.title, user);
+    return p;
+  }
+
+  // ===== 日志 =====
+  function getLogs() { return getDB().logs; }
+
+  // ===== 重置数据（开发用） =====
+  function resetDB() {
+    localStorage.removeItem(DB_KEY);
+  }
+
+  return {
+    login, getCurrentUser, setCurrentUser,
+    getPersons, getPerson, addPerson, updatePerson, setRiskLevel, chooseService,
+    getUpdatesByPerson, addUpdate,
+    getQuestions, getQuestionsByPerson, getPendingQuestions, addQuestion, replyQuestion,
+    getReminders, getPendingReminders, addReminder, confirmReminder,
+    getJobs, addJob, deleteJob,
+    getPolicies, addPolicy,
+    getLogs, resetDB
   };
 })();
