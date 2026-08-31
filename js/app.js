@@ -25,6 +25,7 @@ const App = (function () {
     if (attrs) for (const k in attrs) {
       if (k === 'class') e.className = attrs[k];
       else if (k === 'html') e.innerHTML = attrs[k];
+      else if (k === 'selected') { if (attrs[k]) e.selected = true; }
       else if (k.startsWith('on')) e.addEventListener(k.slice(2), attrs[k]);
       else if (k === 'dataset') for (const d in attrs[k]) e.dataset[d] = attrs[k][d];
       else e.setAttribute(k, attrs[k]);
@@ -161,6 +162,8 @@ const App = (function () {
     const app = $('#app');
     app.innerHTML = '';
     const user = Storage.getCurrentUser();
+    if (user && user.role === 'released') setTimeout(() => XiaoAn.mount(user), 0);
+    else XiaoAn.destroy();
     if (user) {
       app.appendChild(renderDashboard(user));
     } else if (state.view === 'login') {
@@ -205,6 +208,7 @@ const App = (function () {
           el('div', { class: 'platform-tags' },
             el('span', {}, '✓ 五方协同'),
             el('span', {}, '✓ AI智能风控'),
+            el('span', {}, '✓ 小安AI助手'),
             el('span', {}, '✓ 全程可追溯')
           )
         )
@@ -228,7 +232,7 @@ const App = (function () {
           el('span', { class: 'notice-divider' }, '◆'),
           el('span', { class: 'notice-item' }, '📋 人社部联合发布2026年第一季度刑释人员专项招聘计划'),
           el('span', { class: 'notice-divider' }, '◆'),
-          el('span', { class: 'notice-item' }, '🔔 本平台已上线AI智能风险评级系统，助力精准帮教'),
+          el('span', { class: 'notice-item' }, '🤖 刑释人员端「小安」AI助手已上线，可咨询补助、社保与政策问题'),
           el('span', { class: 'notice-divider' }, '◆'),
           el('span', { class: 'notice-item' }, '⚠️ 请各端口工作人员及时更新在册人员动态信息'),
           el('span', { class: 'notice-divider' }, '◆')
@@ -258,7 +262,7 @@ const App = (function () {
       el('div', { class: 'stat-divider' }),
       el('div', { class: 'stat-item' },
         el('div', { class: 'stat-num', 'data-target': '25' }, '0'),
-        el('div', { class: 'stat-label' }, '普法案例库'),
+        el('div', { class: 'stat-label' }, '政策文件库'),
         el('div', { class: 'stat-unit' }, '篇')
       )
     ));
@@ -313,25 +317,6 @@ const App = (function () {
       )
     ));
 
-    // ===== 今日普法预览卡 =====
-    const todayCase = LawLibrary.getTodayCase();
-    if (todayCase) {
-      wrap.appendChild(el('div', { class: 'section-title' },
-        el('span', { class: 'title-bar' }), '每日普法 · 今日案例', el('span', { class: 'title-bar' })
-      ));
-      wrap.appendChild(el('div', { class: 'law-preview', onclick: () => renderLawDetail(todayCase) },
-        el('div', { class: 'law-preview-tag' }, '⚖️ ' + todayCase.category),
-        el('div', { class: 'law-preview-body' },
-          el('div', { class: 'law-preview-title' }, todayCase.title),
-          el('div', { class: 'law-preview-meta' },
-            el('span', {}, '📅 ' + todayCase.date),
-            el('span', {}, '📍 ' + todayCase.location)
-          ),
-          el('div', { class: 'law-preview-lesson' }, todayCase.lesson.substring(0, 80) + '...')
-        ),
-        el('div', { class: 'law-preview-btn' }, '查看详情 →')
-      ));
-    }
 
     wrap.appendChild(el('div', { class: 'footer-note' },
       el('div', { style: 'margin-bottom:6px;' }, '✨ 提示：本平台为演示系统，数据存储于本地浏览器'),
@@ -432,8 +417,8 @@ const App = (function () {
     state.page = defaultPage(user.role);
     toast('登录成功，欢迎您，' + user.name);
     render();
-    // 登录后自动弹出今日普法（每天每个用户仅弹一次）
-    setTimeout(() => showDailyLawOnce(user), 600);
+    // 仅刑释人员端在登录后自动弹出今日普法（每天每个用户仅弹一次）
+    if (user.role === 'released') setTimeout(() => showDailyLawOnce(user), 600);
   }
 
   function defaultPage(role) {
@@ -457,7 +442,7 @@ const App = (function () {
         el('div', { class: 'brand' }, el('h2', {}, '⚖️ 安置帮教平台'), el('p', {}, cfg.name)),
         el('div', { class: 'nav' },
           ...navItems.map(item =>
-            el('div', { class: 'nav-item' + (state.page === item.key ? ' active' : ''), onclick: () => { state.page = item.key; render(); } },
+            el('div', { class: 'nav-item' + (state.page === item.key ? ' active' : ''), onclick: () => { if (item.key === 'xiaoan') { XiaoAn.open(); } else { state.page = item.key; render(); } } },
               el('span', { class: 'nav-icon' }, item.icon), el('span', {}, item.label)
             )
           )
@@ -481,24 +466,24 @@ const App = (function () {
 
   function getNavItems(role) {
     const law = { key: 'law', icon: '⚖️', label: '每日普法' };
-    const common = [{ key: 'dashboard', icon: '📊', label: '工作台' }, law];
+    const common = [{ key: 'dashboard', icon: '📊', label: '工作台' }];
     const maps = {
       police: [...common, { key: 'persons', icon: '📁', label: '人员档案管理' }, { key: 'upload', icon: '⬆️', label: '上传档案信息' }, { key: 'logs', icon: '📜', label: '操作日志' }],
       prison: [...common, { key: 'records', icon: '📋', label: '服刑档案管理' }, { key: 'reminders', icon: '🔔', label: '接送确认提醒' }, { key: 'logs', icon: '📜', label: '操作日志' }],
       judicial: [...common, { key: 'persons', icon: '👥', label: '人员管理' }, { key: 'risk', icon: '⚠️', label: '风险评级' }, { key: 'reminders', icon: '🔔', label: '接送确认' }, { key: 'jobs', icon: '💼', label: '招聘信息管理' }, { key: 'policies', icon: '📢', label: '政策发布' }, { key: 'analysis', icon: '🤖', label: 'AI数据分析' }, { key: 'logs', icon: '📜', label: '操作日志' }],
-      volunteer: [{ key: 'questions', icon: '❓', label: '待回复疑问' }, { key: 'allQuestions', icon: '📋', label: '全部疑问' }, law, { key: 'logs', icon: '📜', label: '操作日志' }],
-      released: [{ key: 'dashboard', icon: '🏠', label: '我的主页' }, { key: 'update', icon: '✏️', label: '更新信息' }, { key: 'policies', icon: '📢', label: '政策与招聘' }, { key: 'questions', icon: '❓', label: '我的疑问' }, { key: 'ask', icon: '➕', label: '提交疑问' }, law, { key: 'logs', icon: '📜', label: '操作日志' }]
+      volunteer: [{ key: 'questions', icon: '❓', label: '待回复疑问' }, { key: 'allQuestions', icon: '📋', label: '全部疑问' }, { key: 'logs', icon: '📜', label: '操作日志' }],
+      released: [{ key: 'dashboard', icon: '🏠', label: '我的主页' }, { key: 'update', icon: '✏️', label: '更新信息' }, { key: 'policies', icon: '📢', label: '政策·招聘·培训' }, { key: 'report', icon: '📢', label: '违法举报' }, { key: 'help', icon: '🧭', label: '办事服务' }, { key: 'questions', icon: '❓', label: '我的疑问' }, { key: 'ask', icon: '➕', label: '提交疑问' }, { key: 'xiaoan', icon: '🤖', label: '小安助手' }, law, { key: 'logs', icon: '📜', label: '操作日志' }]
     };
     return maps[role] || common;
   }
 
   function renderPage(user, page) {
     const pages = {
-      police: { dashboard: policeDashboard, persons: () => personsListPage(user, 'police'), upload: () => policeUploadPage(user), law: lawPage, logs: () => logsPage(user) },
-      prison: { dashboard: prisonDashboard, records: prisonRecordsPage, reminders: prisonRemindersPage, law: lawPage, logs: () => logsPage(user) },
-      judicial: { dashboard: judicialDashboard, persons: () => personsListPage(user, 'judicial'), risk: riskPage, reminders: judicialRemindersPage, jobs: jobsManagePage, policies: policiesManagePage, analysis: analysisPage, law: lawPage, logs: () => logsPage(user) },
-      volunteer: { questions: () => volunteerQuestionsPage(user, true), allQuestions: () => volunteerQuestionsPage(user, false), law: lawPage, logs: () => logsPage(user) },
-      released: { dashboard: releasedDashboard, update: releasedUpdatePage, policies: releasedPoliciesPage, questions: releasedQuestionsPage, ask: releasedAskPage, law: lawPage, logs: () => logsPage(user) }
+      police: { dashboard: policeDashboard, persons: () => personsListPage(user, 'police'), upload: () => policeUploadPage(user), logs: () => logsPage(user) },
+      prison: { dashboard: prisonDashboard, records: prisonRecordsPage, reminders: prisonRemindersPage, logs: () => logsPage(user) },
+      judicial: { dashboard: judicialDashboard, persons: () => personsListPage(user, 'judicial'), risk: riskPage, reminders: judicialRemindersPage, jobs: jobsManagePage, policies: policiesManagePage, analysis: analysisPage, logs: () => logsPage(user) },
+      volunteer: { questions: () => volunteerQuestionsPage(user, true), allQuestions: () => volunteerQuestionsPage(user, false), logs: () => logsPage(user) },
+      released: { dashboard: releasedDashboard, update: releasedUpdatePage, policies: releasedPoliciesPage, report: releasedReportPage, help: releasedHelpPage, questions: releasedQuestionsPage, ask: releasedAskPage, xiaoan: () => el('div', {}), law: lawPage, logs: () => logsPage(user) }
     };
     try {
       const fn = pages[user.role] && pages[user.role][page];
@@ -992,6 +977,11 @@ const App = (function () {
     const updates = Storage.getUpdatesByPerson(p.id);
     const frag = el('div', {});
     frag.appendChild(todayLawCard());
+    frag.appendChild(el('div', { class: 'card xa-welcome-card' },
+      el('div', { class: 'card-title' }, '🤖 我是小安'),
+      el('p', { class: 'u-text-muted' }, '您身边的安置帮教政策助手，可以解答社会补助、社会保障、就业创业以及相关政策问题。'),
+      el('button', { class: 'btn btn-primary btn-sm', onclick: () => XiaoAn.open() }, '开始咨询小安 →')
+    ));
     if (p.riskLevel === 'low' && !p.serviceChoiceMade) {
       setTimeout(() => showServiceChoice(user, p), 300);
     }
@@ -1015,7 +1005,6 @@ const App = (function () {
       el('div', { class: 'hint' }, '请在以下时间点登录系统更新个人信息（居住地、职业、婚姻等）：'),
       ...[
         { key: '1month', label: '刑满释放后1个月' },
-        { key: '3month', label: '刑满释放后3个月' },
         { key: '6month', label: '刑满释放后6个月' },
         { key: '1year', label: '刑满释放后1年' },
         { key: '3year', label: '刑满释放后3年' },
@@ -1053,7 +1042,6 @@ const App = (function () {
         el('div', { class: 'form-group' }, el('label', {}, '选择时间节点 *'),
           el('select', { id: 'u_tp' },
             el('option', { value: '1month' }, '刑满释放后1个月'),
-            el('option', { value: '3month' }, '刑满释放后3个月'),
             el('option', { value: '6month' }, '刑满释放后6个月'),
             el('option', { value: '1year' }, '刑满释放后1年'),
             el('option', { value: '3year' }, '刑满释放后3年'),
@@ -1069,12 +1057,27 @@ const App = (function () {
             el('option', { value: '离异', selected: p.maritalStatus === '离异' }, '离异'),
             el('option', { value: '丧偶', selected: p.maritalStatus === '丧偶' }, '丧偶')))
       ),
+      el('div', { class: 'row' },
+        el('div', { class: 'form-group' }, el('label', {}, '联系电话'), el('input', { id: 'u_phone', value: p.phone || '' })),
+        el('div', { class: 'form-group' }, el('label', {}, '收入情况'),
+          el('select', { id: 'u_income' }, el('option', { value: '', selected: !p.income }, '请选择'),
+            el('option', { value: '无收入', selected: p.income === '无收入' }, '无收入'),
+            el('option', { value: '2000元以下', selected: p.income === '2000元以下' }, '2000元以下'),
+            el('option', { value: '2000-5000元', selected: p.income === '2000-5000元' }, '2000-5000元'),
+            el('option', { value: '5000元以上', selected: p.income === '5000元以上' }, '5000元以上')))
+      ),
+      el('div', { class: 'row' },
+        el('div', { class: 'form-group' }, el('label', {}, '技能特长'), el('input', { id: 'u_skills', value: p.skills || '', placeholder: '如：电工、驾驶、烹饪等' })),
+        el('div', { class: 'form-group' }, el('label', {}, '就业意向'), el('input', { id: 'u_intent', value: p.employmentIntent || '', placeholder: '如：想找制造业/服务业岗位' }))
+      ),
       el('button', { class: 'btn btn-primary', onclick: () => {
         const tp = $('#u_tp').value;
-        const tpMap = { '1month': '刑满释放后1个月', '3month': '刑满释放后3个月', '6month': '刑满释放后6个月', '1year': '刑满释放后1年', '3year': '刑满释放后3年', '5year': '刑满释放后5年' };
+        const tpMap = { '1month': '刑满释放后1个月', '6month': '刑满释放后6个月', '1year': '刑满释放后1年', '3year': '刑满释放后3年', '5year': '刑满释放后5年' };
         Storage.addUpdate({ personId: p.id, timePoint: tp, timePointLabel: tpMap[tp],
           address: $('#u_address').value.trim(), occupation: $('#u_occupation').value.trim(),
-          maritalStatus: $('#u_marital').value }, user);
+          maritalStatus: $('#u_marital').value, phone: $('#u_phone').value.trim(),
+          income: $('#u_income').value, skills: $('#u_skills').value.trim(),
+          employmentIntent: $('#u_intent').value.trim() }, user);
         toast('信息更新成功'); state.page = 'dashboard'; render();
       } }, '提交更新')
     );
@@ -1098,6 +1101,7 @@ const App = (function () {
         jobs.map(j => [j.company, j.position, j.salary, j.location, j.requirement, fmtDate(j.publishDate)]))
         : emptyState('暂无招聘信息')
     ));
+    frag.appendChild(renderTrainingSection(user));
     return frag;
   }
 
@@ -1136,15 +1140,135 @@ const App = (function () {
     return frag;
   }
 
+  // ===== 刑释人员：技校培训 =====
+  function renderTrainingSection(user) {
+    const p = Storage.getPerson(user.personId);
+    const trainings = Storage.getTrainings();
+    return el('div', { class: 'card' },
+      el('div', { class: 'card-title' }, '🎓 技校培训信息'),
+      el('div', { class: 'hint' }, '人社部门推送的技校培训信息，可在线报名。开班前将由学校/机构通知。'),
+      trainings.length ? table(['学校/机构', '培训专业', '地点', '开班时间', '名额', '要求', '操作'],
+        trainings.map(t => [t.school, t.major, t.location, t.startDate || '-', (t.quota || '-') + '人', t.requirement || '-',
+          (t.signups || []).includes(p.id) ? tag('已报名', 'tag-replied') :
+            el('button', { class: 'btn btn-primary btn-sm', onclick: () => {
+              Storage.signTraining(t.id, p.id, user);
+              toast('报名成功，请留意开班通知'); render();
+            } }, '报名')]))
+        : emptyState('暂无培训信息')
+    );
+  }
+
+  // ===== 刑释人员：违法举报 =====
+  function releasedReportPage(user) {
+    const p = Storage.getPerson(user.personId);
+    const reports = Storage.getReportsByPerson(p.id);
+    const frag = el('div', {});
+    frag.appendChild(el('div', { class: 'card' },
+      el('div', { class: 'card-title' }, '📢 违法举报（劳动监察）'),
+      el('div', { class: 'hint' }, '如您遭遇拖欠工资、违法用工等情况，可在此提交劳动监察举报。请如实填写，并上传相关证明材料（图片 jpg，单张不超过 1MB）。'),
+      el('div', { class: 'row' },
+        el('div', { class: 'form-group' }, el('label', {}, '单位名称 *'), el('input', { id: 'r_company' })),
+        el('div', { class: 'form-group' }, el('label', {}, '单位地址 *'), el('input', { id: 'r_address' }))
+      ),
+      el('div', { class: 'row' },
+        el('div', { class: 'form-group' }, el('label', {}, '联系电话 *'), el('input', { id: 'r_phone', placeholder: '您的联系方式' })),
+        el('div', { class: 'form-group' }, el('label', {}, '违法时间 *'), el('input', { id: 'r_time', type: 'date' }))
+      ),
+      el('div', { class: 'form-group' }, el('label', {}, '违法事实与过程 *'), el('textarea', { id: 'r_detail', class: 'h-120', placeholder: '请描述单位的违法事实、经过……' })),
+      el('div', { class: 'form-group' }, el('label', {}, '证明材料（图片 jpg）'),
+        el('input', { id: 'r_img', type: 'file', accept: '.jpg,.jpeg', onchange: () => {
+          const f = $('#r_img').files[0];
+          if (f && f.size > 1024 * 1024) { toast('图片不能超过 1MB', 'error'); $('#r_img').value = ''; }
+        } })),
+      el('button', { class: 'btn btn-primary', onclick: () => submitReport(user, p) }, '提交举报')
+    ));
+    if (reports.length) {
+      frag.appendChild(el('div', { class: 'card' },
+        el('div', { class: 'card-title' }, '📋 我的举报记录'),
+        table(['单位名称', '违法时间', '材料', '状态', '提交时间', '操作'],
+          reports.map(r => [r.company, r.time || '-', r.evidence ? '已上传' : '未上传',
+            tag('待处理', 'tag-pending'), fmtDate(r.createdAt),
+            el('button', { class: 'btn btn-outline btn-sm', onclick: () => viewReport(r) }, '查看')]))
+      ));
+    }
+    return frag;
+  }
+
+  function submitReport(user, p) {
+    if (!$('#r_company').value.trim() || !$('#r_address').value.trim() || !$('#r_phone').value.trim() || !$('#r_time').value || !$('#r_detail').value.trim()) {
+      toast('请完整填写举报信息', 'error'); return;
+    }
+    const file = $('#r_img').files[0];
+    const onDone = (evidence) => {
+      Storage.addReport({ personId: p.id, personName: p.name,
+        company: $('#r_company').value.trim(), address: $('#r_address').value.trim(),
+        phone: $('#r_phone').value.trim(), time: $('#r_time').value,
+        detail: $('#r_detail').value.trim(), evidence }, user);
+      toast('举报已提交，相关部门将尽快处理'); state.page = 'report'; render();
+    };
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => onDone(reader.result);
+      reader.readAsDataURL(file);
+    } else {
+      onDone(null);
+    }
+  }
+
+  function viewReport(r) {
+    const body = el('div', {},
+      r.evidence ? el('img', { class: 'report-img', src: r.evidence, alt: '证明材料' }) : el('p', { class: 'u-text-muted' }, '未上传证明材料'),
+      el('ul', { class: 'info-list' },
+        li('单位名称', r.company), li('单位地址', r.address), li('联系电话', r.phone),
+        li('违法时间', r.time), li('违法事实与过程', r.detail),
+        li('状态', r.status || '待处理'), li('提交时间', fmtDate(r.createdAt)))
+    );
+    showModal('举报详情', body, { wide: true });
+  }
+
+  // ===== 刑释人员：办事服务（生活困难 / 创业 / 社保） =====
+  function releasedHelpPage(user) {
+    const frag = el('div', {});
+    frag.appendChild(el('div', { class: 'card' },
+      el('div', { class: 'card-title' }, '🧭 办事服务'),
+      el('div', { class: 'hint' }, '以下服务将跳转至国家或相关部门官方平台办理。具体办理地点与材料以您当前所在地（户籍地或居住地）的当地部门要求为准。')
+    ));
+    frag.appendChild(helpGroup('🏠 生活困难帮助', [
+      ['失业保险金申领', 'https://si.12333.gov.cn/', '跳转至国家社会保险公共服务平台（失业保险金申领）'],
+      ['特困人员申请', 'https://www.mca.gov.cn/', '跳转至民政部门网站，按当地民政部门指引申请']
+    ]));
+    frag.appendChild(helpGroup('🚀 创业帮助', [
+      ['创业担保贷款申请', 'https://www.mohrss.gov.cn/', '跳转至人社部门网站，按当地人社部门指引申请'],
+      ['一次性创业补贴申请', 'https://www.mohrss.gov.cn/', '跳转至人社部门网站，按当地人社部门指引申请']
+    ]));
+    frag.appendChild(helpGroup('🛡️ 社会保障申请', [
+      ['社保办理', 'https://si.12333.gov.cn/', '跳转至国家社会保险公共服务平台（社保办理/恢复）'],
+      ['医保办理', 'https://www.nhsa.gov.cn/', '跳转至国家医保服务平台，按当地医保部门指引办理']
+    ]));
+    return frag;
+  }
+
+  function helpGroup(title, items) {
+    return el('div', { class: 'card' },
+      el('div', { class: 'card-title' }, title),
+      ...items.map(it => el('div', { class: 'help-link-row' },
+        el('div', {},
+          el('div', { class: 'help-link-name' }, it[0]),
+          el('div', { class: 'help-link-desc' }, it[2])
+        ),
+        el('a', { class: 'btn btn-outline btn-sm', href: it[1], target: '_blank', rel: 'noopener noreferrer' }, '前往办理 →')
+      ))
+    );
+  }
+
   // ===== 社会志愿者端口 =====
   function volunteerQuestionsPage(user, onlyPending) {
     let qs = Storage.getQuestions();
     if (onlyPending) qs = qs.filter(q => q.status === 'pending');
     const frag = el('div', {});
-    frag.appendChild(todayLawCard());
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, onlyPending ? '❓ 待回复疑问' : '📋 全部疑问'),
-      el('div', { class: 'hint' }, '志愿者每周定期登录，对刑释人员的疑问进行专业答疑。志愿者回复前请先查阅"每日普法"专栏，确保回复内容准确合规。'),
+      el('div', { class: 'hint' }, '志愿者每周定期登录，对刑释人员的疑问进行专业答疑，请尽量在一周内完成回复。'),
       qs.length ? table(
         ['人员', '类别', '标题', '内容', '状态', '提交时间', '操作'],
         qs.map(q => [q.personName, q.category, q.title, q.content.length > 20 ? q.content.slice(0, 20) + '...' : q.content,

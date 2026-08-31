@@ -8,7 +8,12 @@ const Storage = (function () {
   function getDB() {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) {
-      try { return JSON.parse(raw); } catch (e) {}
+      try {
+        const db = JSON.parse(raw);
+        if (db.trainings === undefined) db.trainings = [];
+        if (db.reports === undefined) db.reports = [];
+        return db;
+      } catch (e) {}
     }
     return initDB();
   }
@@ -86,6 +91,12 @@ const Storage = (function () {
         { id: 'j2', company: '京东物流', position: '分拣员', salary: '3500-5000元/月',
           location: '北京', requirement: '能适应夜班，工作认真负责', publishDate: d(-3), createdBy: 'u_judicial' }
       ],
+      trainings: [
+        { id: 't1', school: '南昌市高级技工学校', major: '电工技能培训', location: '南昌市青山湖区', startDate: '2026-09-15', quota: 30, requirement: '年满16周岁，身体健康' },
+        { id: 't2', school: '赣州市就业训练中心', major: '中式烹饪培训', location: '赣州市章贡区', startDate: '2026-09-20', quota: 20, requirement: '有意从事餐饮行业' },
+        { id: 't3', school: '江西省机电技师学院', major: '新能源汽车维修', location: '南昌市新建区', startDate: '2026-10-10', quota: 25, requirement: '初中以上学历' }
+      ],
+      reports: [],
       policies: [
         { id: 'pol1', title: '关于进一步做好刑释人员安置帮教工作的通知',
           content: '为进一步加强刑释人员安置帮教工作，现就有关事项通知如下：\n一、提高认识，加强组织领导\n二、完善衔接机制，确保无缝对接\n三、强化就业帮扶，拓宽就业渠道\n四、加强心理辅导，促进顺利回归\n五、完善信息管理，建立跟踪机制',
@@ -315,6 +326,43 @@ const Storage = (function () {
     return p;
   }
 
+  // ===== 技校培训 =====
+  function getTrainings() { return getDB().trainings || []; }
+
+  function signTraining(id, personId, user) {
+    const db = getDB();
+    const t = (db.trainings || []).find(x => x.id === id);
+    if (t) {
+      t.signups = t.signups || [];
+      if (!t.signups.includes(personId)) t.signups.push(personId);
+      saveDB(db);
+      addLog('培训报名：' + t.major + '（' + t.school + '）', user);
+    }
+    return t;
+  }
+
+  // ===== 违法举报 =====
+  function getReports() { return getDB().reports || []; }
+
+  function getReportsByPerson(personId) {
+    return (getDB().reports || []).filter(r => r.personId === personId);
+  }
+
+  function addReport(report, user) {
+    const db = getDB();
+    const r = {
+      id: genId('rep'),
+      ...report,
+      status: '待处理',
+      createdAt: new Date().toISOString().slice(0, 10)
+    };
+    db.reports = db.reports || [];
+    db.reports.push(r);
+    saveDB(db);
+    addLog('提交违法举报：' + r.company, user);
+    return r;
+  }
+
   // ===== 日志 =====
   function getLogs() { return getDB().logs; }
 
@@ -331,6 +379,8 @@ const Storage = (function () {
     getReminders, getPendingReminders, addReminder, confirmReminder,
     getJobs, addJob, deleteJob,
     getPolicies, addPolicy,
+    getTrainings, signTraining,
+    getReports, getReportsByPerson, addReport,
     getLogs, resetDB
   };
 })();

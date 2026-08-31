@@ -165,7 +165,6 @@ const AI = (function () {
 
     const timePoints = [
       { key: '1month', label: '1个月' },
-      { key: '3month', label: '3个月' },
       { key: '6month', label: '6个月' },
       { key: '1year', label: '1年' },
       { key: '3year', label: '3年' },

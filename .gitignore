@@ -15,3 +15,6 @@ build/
 
 # 日志
 *.log
+
+# 本地密钥配置（勿提交）
+js/config.js
