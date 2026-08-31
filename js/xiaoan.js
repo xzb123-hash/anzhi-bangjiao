@@ -27,7 +27,8 @@ const XiaoAn = (function () {
     '2. 回答简洁，先给结论再给步骤；不确定的政策信息要明确说明并建议咨询当地司法所、人社/民政窗口或 12348 法律服务热线；',
     '3. 不得编造政策、金额或办理期限；',
     '4. 不泄露任何个人信息，拒绝违法犯罪、暴力等内容；',
-    '5. 当用户表达负面情绪时，先共情安抚，再建议寻求专业心理支持。'
+    '5. 当用户表达负面情绪时，先共情安抚，再建议寻求专业心理支持。',
+    '6. 你同时为公安、监狱、司法行政、人社、医保、民政、志愿者等工作人员提供平台操作、业务办理流程与政策咨询服务。'
   ].join('');
 
   const QUICK_QUESTIONS = [
@@ -285,12 +286,15 @@ const XiaoAn = (function () {
 
     panelEl = el('div', { class: 'xa-panel' }, header, messagesEl, renderQuick(), footer);
 
+    const isReleased = user.role === 'released';
+    const greeting = isReleased
+      ? '您好，' + (user.name || '朋友') + '！我是小安 🤖，可以为您解答社会补助、社会保障、就业创业和相关政策问题。有什么想了解的，随时问我。'
+      : '您好，' + (user.name || '朋友') + '！我是小安 🤖，可以为您解答政策信息、业务办理流程和平台使用问题。有什么需要帮助的，随时问我。';
     const history = loadHistory();
     if (!getApiKey()) {
       addMessage('ai', '您好，' + (user.name || '朋友') + '！我是小安 🤖。首次使用请先配置 API Key（仅保存在当前浏览器，不会上传）：');
       addSetupRow();
     } else if (!history.length) {
-      const greeting = '您好，' + (user.name || '朋友') + '！我是小安 🤖，可以为您解答社会补助、社会保障、就业创业和相关政策问题。有什么想了解的，随时问我。';
       addMessage('ai', greeting);
       saveHistory([{ role: 'assistant', content: greeting }]);
     } else {
@@ -301,6 +305,11 @@ const XiaoAn = (function () {
     document.body.appendChild(panelEl);
   }
 
+  // 供其他模块复用：携带历史直接请求豆包（如 AI 风险评级）
+  function request(messages) {
+    return callAPI(messages);
+  }
+
   function destroy() {
     if (btnEl && btnEl.parentNode) btnEl.parentNode.removeChild(btnEl);
     if (panelEl && panelEl.parentNode) panelEl.parentNode.removeChild(panelEl);
@@ -308,5 +317,5 @@ const XiaoAn = (function () {
     currentUser = null; chatKey = '';
   }
 
-  return { mount: mount, open: open, close: close, send: sendMessage, destroy: destroy };
+  return { mount: mount, open: open, close: close, send: sendMessage, request: request, destroy: destroy };
 })();

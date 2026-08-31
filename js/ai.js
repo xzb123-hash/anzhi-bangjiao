@@ -199,5 +199,52 @@ const AI = (function () {
     };
   }
 
-  return { riskSuggestion, riskSuggestionsAll, analyzeStats };
+  // 解析豆包返回的 JSON 片段
+  function parseJsonReply(text) {
+    try { return JSON.parse(text); } catch (e) {}
+    const m = String(text).match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch (e2) {} }
+    return null;
+  }
+
+  // 豆包 AI 深度风险评级（规则评级为兜底）
+  async function riskSuggestionAsync(person) {
+    const base = riskSuggestion(person);
+    try {
+      const data = {
+        name: person.name || '',
+        age: person.age || '',
+        gender: person.gender || '',
+        crime: person.crime || '',
+        sentence: person.sentence || '',
+        prisonPerformance: person.prisonPerformance || '',
+        maritalStatus: person.maritalStatus || '',
+        occupation: person.occupation || '',
+        ruleScore: base.score
+      };
+      const sys = '你是安置帮教领域的资深司法社工。请根据刑释人员信息给出风险评级建议，只输出 JSON：{"level":"high|medium|low","score":0-100(整数), "analysis":"影响因素简要分析(100字内)", "advice":"帮教建议(150字内)"}';
+      const reply = await XiaoAn.request([
+        { role: 'system', content: sys },
+        { role: 'user', content: JSON.stringify(data) }
+      ]);
+      const parsed = parseJsonReply(reply);
+      if (parsed && parsed.level && parsed.score !== undefined) {
+        const level = parsed.level === 'high' ? 'high' : parsed.level === 'low' ? 'low' : 'medium';
+        const score = Math.max(0, Math.min(100, parseInt(parsed.score, 10) || base.score));
+        return {
+          level,
+          levelText: level === 'high' ? '高风险' : level === 'low' ? '低风险' : '中等风险',
+          score,
+          analysis: parsed.analysis || '',
+          advice: parsed.advice || base.advice,
+          source: 'llm'
+        };
+      }
+      return Object.assign({}, base, { source: 'rule', error: '豆包返回格式异常' });
+    } catch (e) {
+      return Object.assign({}, base, { source: 'rule', error: e.message });
+    }
+  }
+
+  return { riskSuggestion, riskSuggestionsAll, analyzeStats, riskSuggestionAsync };
 })();
