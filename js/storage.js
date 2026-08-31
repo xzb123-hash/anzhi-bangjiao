@@ -12,6 +12,7 @@ const Storage = (function () {
         const db = JSON.parse(raw);
         if (db.trainings === undefined) db.trainings = [];
         if (db.reports === undefined) db.reports = [];
+        ensureExtraUsers(db);
         return db;
       } catch (e) {}
     }
@@ -20,6 +21,19 @@ const Storage = (function () {
 
   function saveDB(db) {
     localStorage.setItem(DB_KEY, JSON.stringify(db));
+  }
+
+  // 老版本浏览器数据兼容：自动补齐三个部门账号
+  function ensureExtraUsers(db) {
+    if (!db.users) db.users = [];
+    const extra = [
+      { id: 'u_hrss', username: 'hrss', password: '123456', name: '人社管理员', role: 'hrss', org: '市人力资源和社会保障局' },
+      { id: 'u_medicare', username: 'medicare', password: '123456', name: '医保管理员', role: 'medicare', org: '市医疗保障局' },
+      { id: 'u_civil', username: 'civil', password: '123456', name: '民政管理员', role: 'civil', org: '市民政局' }
+    ];
+    extra.forEach(u => {
+      if (!db.users.some(x => x.username === u.username)) db.users.push(u);
+    });
   }
 
   function initDB() {
