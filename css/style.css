@@ -2286,3 +2286,10 @@ textarea.h-140 { min-height: 140px; }
 
 /* ===== 状态标签补充 ===== */
 .tag-warning { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+
+/* ===== 办事服务：在线申请 ===== */
+.help-link-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ===== 相关法律列表 ===== */
+.law-item { cursor: pointer; transition: border-color .15s, background .15s; }
+.law-item:hover { border-color: #2563eb; background: #f8fbff; }
