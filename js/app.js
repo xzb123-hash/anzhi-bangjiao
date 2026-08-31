@@ -1263,25 +1263,30 @@ const App = (function () {
   function drawMacroMap(kind) {
     if (!macroChart || !macroData) return;
     const isChina = kind === 'china';
-    const adcode = isChina ? '100000' : '360000';
     const mapName = isChina ? 'china' : 'jiangxi';
     const data = macroData[isChina ? 'china' : 'jiangxi'] || {};
     const list = Object.keys(data).map(k => ({ name: k, value: data[k] }));
-    fetch('https://geo.datav.aliyun.com/areas_v3/bound/' + adcode + '_full.json')
-      .then(r => r.json())
-      .then(geo => {
-        if (!echarts.getMap(mapName)) echarts.registerMap(mapName, geo);
-        const maxV = Math.max.apply(null, list.map(i => i.value).concat([1]));
-        macroChart.setOption({
-          tooltip: { trigger: 'item', formatter: p => p.name + '：' + p.value + ' 人' },
-          visualMap: { min: 0, max: maxV, left: 16, bottom: 16, calculable: true, inRange: { color: ['#e8f1ff', '#2563eb'] } },
-          series: [{ type: 'map', map: mapName, roam: true, label: { show: true, fontSize: 10 }, emphasis: { label: { fontSize: 13, fontWeight: 'bold' } }, data: list }]
-        });
-      })
-      .catch(() => {
-        const box = document.getElementById('macroMapBox');
-        if (box) { box.innerHTML = ''; box.appendChild(el('p', { class: 'u-text-muted' }, '地图数据加载失败，请检查网络（下方省份明细仍可查看）。')); }
+    const applyGeo = (geo) => {
+      if (!echarts.getMap(mapName)) echarts.registerMap(mapName, geo);
+      const maxV = Math.max.apply(null, list.map(i => i.value).concat([1]));
+      macroChart.setOption({
+        tooltip: { trigger: 'item', formatter: p => p.name + '：' + p.value + ' 人' },
+        visualMap: { min: 0, max: maxV, left: 16, bottom: 16, calculable: true, inRange: { color: ['#e8f1ff', '#2563eb'] } },
+        series: [{ type: 'map', map: mapName, roam: true, label: { show: true, fontSize: 10 }, emphasis: { label: { fontSize: 13, fontWeight: 'bold' } }, data: list }]
       });
+    };
+    const showFallback = () => {
+      const box = document.getElementById('macroMapBox');
+      if (box) { box.innerHTML = ''; box.appendChild(el('p', { class: 'u-text-muted' }, '地图数据加载失败，请检查网络（下方省份明细仍可查看）。')); }
+    };
+    // 优先使用项目内置地图数据（同源、无跨域限制），失败时回退到在线数据源
+    fetch(isChina ? 'js/geo/china.json' : 'js/geo/jiangxi.json')
+      .then(r => { if (!r.ok) throw new Error('local geo missing'); return r.json(); })
+      .then(applyGeo)
+      .catch(() => fetch('https://geo.datav.aliyun.com/areas_v3/bound/' + (isChina ? '100000' : '360000') + '_full.json')
+        .then(r => { if (!r.ok) throw new Error('remote geo missing'); return r.json(); })
+        .then(applyGeo)
+        .catch(showFallback));
   }
 
   function switchMacroMap(kind) {
