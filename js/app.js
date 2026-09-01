@@ -222,7 +222,7 @@ const App = (function () {
           el('div', { class: 'platform-name' }, '安置帮教综合管理平台'),
           el('div', { class: 'platform-sub' }, 'REHABILITATION ASSISTANCE SYSTEM · 智慧司法'),
           el('div', { class: 'platform-tags' },
-            el('span', {}, '✓ 五方协同'),
+            el('span', {}, '✓ 七方协同'),
             el('span', {}, '✓ AI智能风控'),
             el('span', {}, '✓ 小安AI助手'),
             el('span', {}, '✓ 全程可追溯')
@@ -318,24 +318,43 @@ const App = (function () {
       el('span', { class: 'title-bar' }), '业务流程', el('span', { class: 'title-bar' })
     ));
     wrap.appendChild(el('div', { class: 'flow-chart' },
-      el('div', { class: 'flow-node' },
-        el('div', { class: 'flow-icon' }, '👮'), el('div', { class: 'flow-text' }, '公安'), el('div', { class: 'flow-desc' }, '上传档案')
+      el('div', { class: 'flow-line' },
+        el('div', { class: 'flow-node' },
+          el('div', { class: 'flow-icon' }, '👮'), el('div', { class: 'flow-text' }, '公安'), el('div', { class: 'flow-desc' }, '上传档案')
+        ),
+        el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
+        el('div', { class: 'flow-node' },
+          el('div', { class: 'flow-icon' }, '🔒'), el('div', { class: 'flow-text' }, '监狱'), el('div', { class: 'flow-desc' }, '服刑档案')
+        ),
+        el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
+        el('div', { class: 'flow-node highlight' },
+          el('div', { class: 'flow-icon' }, '⚖️'), el('div', { class: 'flow-text' }, '司法行政'), el('div', { class: 'flow-desc' }, '风险评级')
+        ),
+        el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
+        el('div', { class: 'flow-node' },
+          el('div', { class: 'flow-icon' }, '👤'), el('div', { class: 'flow-text' }, '刑释人员'), el('div', { class: 'flow-desc' }, '定期更新')
+        ),
+        el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
+        el('div', { class: 'flow-node' },
+          el('div', { class: 'flow-icon' }, '🤝'), el('div', { class: 'flow-text' }, '志愿者'), el('div', { class: 'flow-desc' }, '答疑帮扶')
+        )
       ),
-      el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
-      el('div', { class: 'flow-node' },
-        el('div', { class: 'flow-icon' }, '🔒'), el('div', { class: 'flow-text' }, '监狱'), el('div', { class: 'flow-desc' }, '服刑档案')
+      el('div', { class: 'flow-branch' },
+        el('span', {}, '⇊ 保障部门协同'),
+        el('span', { class: 'flow-branch-sub' }, '（就业帮扶 · 医疗保障 · 社会救助）')
       ),
-      el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
-      el('div', { class: 'flow-node highlight' },
-        el('div', { class: 'flow-icon' }, '⚖️'), el('div', { class: 'flow-text' }, '司法行政'), el('div', { class: 'flow-desc' }, '风险评级')
-      ),
-      el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
-      el('div', { class: 'flow-node' },
-        el('div', { class: 'flow-icon' }, '👤'), el('div', { class: 'flow-text' }, '刑释人员'), el('div', { class: 'flow-desc' }, '定期更新')
-      ),
-      el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
-      el('div', { class: 'flow-node' },
-        el('div', { class: 'flow-icon' }, '🤝'), el('div', { class: 'flow-text' }, '志愿者'), el('div', { class: 'flow-desc' }, '答疑帮扶')
+      el('div', { class: 'flow-line' },
+        el('div', { class: 'flow-node' },
+          el('div', { class: 'flow-icon' }, '🧑‍💼'), el('div', { class: 'flow-text' }, '人社'), el('div', { class: 'flow-desc' }, '就业帮扶')
+        ),
+        el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
+        el('div', { class: 'flow-node' },
+          el('div', { class: 'flow-icon' }, '🏥'), el('div', { class: 'flow-text' }, '医保'), el('div', { class: 'flow-desc' }, '医疗保障')
+        ),
+        el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
+        el('div', { class: 'flow-node' },
+          el('div', { class: 'flow-icon' }, '🤲'), el('div', { class: 'flow-text' }, '民政'), el('div', { class: 'flow-desc' }, '社会救助')
+        )
       )
     ));
 

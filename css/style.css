@@ -659,10 +659,11 @@ button:disabled, input:disabled, select:disabled, textarea:disabled {
 /* —— 业务流程图 —— */
 .flow-chart {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0;
+  gap: 12px;
   width: 100%;
   max-width: 1180px;
   padding: 22px;
@@ -672,6 +673,27 @@ button:disabled, input:disabled, select:disabled, textarea:disabled {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   animation: fadeInUp 0.6s 0.6s both;
+}
+.flow-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.flow-branch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #e8c37e;
+  font-size: var(--font-sm);
+  letter-spacing: 1px;
+}
+.flow-branch-sub {
+  color: #bfd1e7;
+  font-size: var(--font-xs);
+  letter-spacing: 0.5px;
 }
 .flow-node {
   display: flex;
