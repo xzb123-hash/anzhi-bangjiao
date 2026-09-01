@@ -166,13 +166,13 @@ const Storage = (function () {
         { id: 'u_hrss', username: 'hrss', password: '123456', name: '人社管理员', role: 'hrss', org: '市人力资源和社会保障局' },
         { id: 'u_medicare', username: 'medicare', password: '123456', name: '医保管理员', role: 'medicare', org: '市医疗保障局' },
         { id: 'u_civil', username: 'civil', password: '123456', name: '民政管理员', role: 'civil', org: '市民政局' },
-        { id: 'u_rel1', username: 'released1', password: '123456', name: '张三', role: 'released', personId: 'p1' },
-        { id: 'u_rel2', username: 'released2', password: '123456', name: '李四', role: 'released', personId: 'p2' },
-        { id: 'u_rel3', username: 'released3', password: '123456', name: '王五', role: 'released', personId: 'p3' }
+        { id: 'u_rel1', username: 'released1', password: '123456', name: '张某某', role: 'released', personId: 'p1' },
+        { id: 'u_rel2', username: 'released2', password: '123456', name: '李某某', role: 'released', personId: 'p2' },
+        { id: 'u_rel3', username: 'released3', password: '123456', name: '王某某', role: 'released', personId: 'p3' }
       ],
       persons: [
         {
-          id: 'p1', name: '张三', gender: '男', age: 28, idCard: '110101199601011234',
+          id: 'p1', name: '张某某', gender: '男', age: 28, idCard: '110101199601011234',
           crime: '盗窃罪', sentence: '有期徒刑2年', releaseDate: isoOffset(-30),
           prisonPerformance: '表现良好，积极参加教育改造，无违规记录',
           riskLevel: 'low', serviceType: 'flexible', serviceChoiceMade: true,
@@ -181,7 +181,7 @@ const Storage = (function () {
           createdBy: 'u_police', createdAt: isoOffset(-60)
         },
         {
-          id: 'p2', name: '李四', gender: '男', age: 35, idCard: '110105198905055678',
+          id: 'p2', name: '李某某', gender: '男', age: 35, idCard: '110105198905055678',
           crime: '故意伤害罪', sentence: '有期徒刑3年6个月', releaseDate: isoOffset(-15),
           prisonPerformance: '表现一般，有过1次违规，经教育后改正',
           riskLevel: 'high', serviceType: 'strict', serviceChoiceMade: true,
@@ -190,7 +190,7 @@ const Storage = (function () {
           createdBy: 'u_police', createdAt: isoOffset(-90)
         },
         {
-          id: 'p3', name: '王五', gender: '男', age: 22, idCard: '110108200203039012',
+          id: 'p3', name: '王某某', gender: '男', age: 22, idCard: '110108200203039012',
           crime: '寻衅滋事罪', sentence: '有期徒刑1年6个月', releaseDate: isoOffset(-7),
           prisonPerformance: '表现较差，有3次违规记录，需重点关注',
           riskLevel: null, serviceType: null, serviceChoiceMade: false,
@@ -205,17 +205,17 @@ const Storage = (function () {
           submittedAt: isoOffset(-25) }
       ],
       questions: [
-        { id: 'q1', personId: 'p1', personName: '张三', category: '心理',
+        { id: 'q1', personId: 'p1', personName: '张某某', category: '心理',
           title: '如何调整出狱后的心态', content: '出狱后总感觉无法融入社会，经常焦虑失眠，请问如何调整？',
           status: 'replied', reply: '建议您多参加社区组织的互助活动，逐步建立自信心。如失眠严重，可前往医院心理科就诊。同时保持规律作息，适当运动。',
           replierName: '心理咨询师 刘医生', repliedAt: isoOffset(-3), createdAt: isoOffset(-10) },
-        { id: 'q2', personId: 'p2', personName: '李四', category: '法律',
+        { id: 'q2', personId: 'p2', personName: '李某某', category: '法律',
           title: '劳动合同纠纷咨询', content: '我在工厂工作了3个月，老板一直不签合同，也不交社保，该怎么办？',
           status: 'pending', reply: null, replierName: null, repliedAt: null, createdAt: isoOffset(-5) }
       ],
       reminders: [
-        { id: 'r1', personId: 'p2', personName: '李四', releaseDate: isoOffset(-15),
-          stage: '30day', message: '李四将于' + isoOffset(-15) + '刑满释放，请司法行政部门确认接送安排。',
+        { id: 'r1', personId: 'p2', personName: '李某某', releaseDate: isoOffset(-15),
+          stage: '30day', message: '李某某将于' + isoOffset(-15) + '刑满释放，请司法行政部门确认接送安排。',
           confirmed: true, confirmedAt: isoOffset(-20), createdBy: 'u_prison', createdAt: isoOffset(-45) }
       ],
       jobs: [
@@ -578,7 +578,7 @@ const Storage = (function () {
   function ensureDemoData() {
     try {
       const db = getDB();
-      // 归档演示账号张三/李四/王五（不再出现在档案列表，登录账号保留）
+      // 归档演示账号（张某某/李某某/王某某，不再出现在档案列表，登录账号保留）
       ['p1', 'p2', 'p3'].forEach(id => {
         const demoP = db.persons.find(x => x.id === id);
         if (demoP) demoP.archived = true;
@@ -596,13 +596,14 @@ const Storage = (function () {
           p.riskLevel = (p.serviceType === 'strict' || String(p.prisonPerformance || '').indexOf('较差') >= 0) ? 'high' : 'low';
         }
       });
-      const currentCount = (db.persons || []).filter(p => !p.archived).length;
-      if (currentCount >= 1286) {
-        saveDB(db);
-        localStorage.setItem(DEMO_SEED_FLAG, '1');
-        return { added: 0 };
-      }
-
+      // 演示账号实名改为“X某某”（张三→张某某等），全库同步
+      const nameMap = { '张三': '张某某', '李四': '李某某', '王五': '王某某' };
+      (db.users || []).forEach(u => { if (nameMap[u.name]) u.name = nameMap[u.name]; });
+      (db.persons || []).forEach(p => { if (nameMap[p.name]) p.name = nameMap[p.name]; });
+      ['updates', 'questions', 'applications', 'reports', 'reminders'].forEach(col => {
+        (db[col] || []).forEach(r => { if (r.personName && nameMap[r.personName]) r.personName = nameMap[r.personName]; });
+      });
+      (db.logs || []).forEach(l => { if (l.message) { for (const k in nameMap) l.message = l.message.split(k).join(nameMap[k]); } });
       const surnames = ['王','李','张','刘','陈','杨','赵','黄','周','吴','徐','孙','马','朱','胡','郭','何','罗','高','林'];
       const crimeList = [
         ['盗窃罪', 30], ['故意伤害罪', 60], ['寻衅滋事罪', 50], ['聚众斗殴罪', 55],
@@ -616,9 +617,35 @@ const Storage = (function () {
         ['江西省', '萍乡市'], ['江西省', '新余市'], ['江西省', '鹰潭市'],
         ['广东省', '深圳市'], ['广东省', '广州市'], ['广东省', '东莞市'], ['广东省', '佛山市'],
         ['浙江省', '杭州市'], ['浙江省', '宁波市'], ['浙江省', '温州市'],
-        ['江苏省', '南京市'], ['福建省', '厦门市'], ['上海市', '上海市'], ['北京市', '北京市'],
-        ['四川省', '成都市'], ['湖南省', '长沙市'], ['湖北省', '武汉市'], ['山东省', '青岛市']
+        ['江苏省', '南京市'], ['江苏省', '苏州市'],
+        ['福建省', '厦门市'], ['福建省', '福州市'],
+        ['上海市', '上海市'], ['北京市', '北京市'],
+        ['四川省', '成都市'], ['湖南省', '长沙市'], ['湖北省', '武汉市'], ['山东省', '青岛市'],
+        ['安徽省', '合肥市'], ['河南省', '郑州市'], ['河北省', '石家庄市'], ['陕西省', '西安市'],
+        ['云南省', '昆明市'], ['贵州省', '贵阳市'], ['广西壮族自治区', '南宁市'],
+        ['辽宁省', '沈阳市'], ['吉林省', '长春市'], ['黑龙江省', '哈尔滨市'],
+        ['内蒙古自治区', '呼和浩特市'], ['山西省', '太原市'], ['海南省', '海口市'],
+        ['重庆市', '重庆市'], ['天津市', '天津市'], ['宁夏回族自治区', '银川市'], ['青海省', '西宁市'], ['新疆维吾尔自治区', '乌鲁木齐市']
       ];
+      // 省份分布均衡：确保每个省份至少 6 人（首次迁移，幂等）
+      if (!localStorage.getItem('azbj_region_v2')) {
+        const provCounts = {};
+        (db.persons || []).forEach(x => { const pr = x.province || '未知'; provCounts[pr] = (provCounts[pr] || 0) + 1; });
+        const provList = [...new Set(regions.map(r => r[0]))];
+        const deficit = provList.filter(pr => (provCounts[pr] || 0) < 6);
+        if (deficit.length) {
+          const donors = db.persons.filter(x => !x.archived && x.province === '江西省' && !x.crime);
+          let di = 0;
+          deficit.forEach(pr => {
+            const city = (regions.find(r => r[0] === pr) || [pr, ''])[1];
+            for (let k = 0; k < 6 && di < donors.length; k++, di++) {
+              const x = donors[di];
+              x.province = pr; x.city = city; x.region = pr + '·' + city;
+            }
+          });
+        }
+        localStorage.setItem('azbj_region_v2', '1');
+      }
       const perfs = [
         '表现良好，积极参加教育改造，无违规记录',
         '服从管理，改造态度端正',
@@ -647,6 +674,43 @@ const Storage = (function () {
 
       const today = new Date();
       const iso = (offset) => { const dt = new Date(today); dt.setDate(dt.getDate() + offset); return dt.toISOString().slice(0, 10); };
+      // 信息更新完成率：1月→5年人数均匀递减（层级包含、幂等补齐）
+      const updateTargets = [
+        { tp: '1month', label: '刑满释放后1个月', count: 1215 },
+        { tp: '6month', label: '刑满释放后6个月', count: 1044 },
+        { tp: '1year', label: '刑满释放后1年', count: 896 },
+        { tp: '3year', label: '刑满释放后3年', count: 452 },
+        { tp: '5year', label: '刑满释放后5年', count: 121 }
+      ];
+      const seedUpdateTargets = () => {
+        const active = db.persons.filter(p => !p.archived);
+        const activeIds = new Set(active.map(p => p.id));
+        updateTargets.forEach(t => {
+          const have = new Set((db.updates || []).filter(u => u.timePoint === t.tp && activeIds.has(u.personId)).map(u => u.personId));
+          let need = t.count - have.size;
+          if (need <= 0) return;
+          for (let i = 0; i < active.length && need > 0; i++) {
+            const p = active[i];
+            if (have.has(p.id)) continue;
+            have.add(p.id);
+            db.updates.push({ id: genId('up'), personId: p.id, timePoint: t.tp, timePointLabel: t.label,
+              address: p.address || '-', occupation: p.occupation || '-', maritalStatus: p.maritalStatus || '未知',
+              phone: p.phone || '-', income: pick(['无收入', '2000元以下', '2000-5000元', '5000元以上']),
+              skills: pick(['电工', '驾驶', '烹饪', '物流分拣', '家政服务', '']),
+              employmentIntent: pick(['制造业岗位', '服务业岗位', '物流配送', '']),
+              submittedAt: iso(-randInt(10, 60)) });
+            need--;
+          }
+        });
+      };
+      const currentCount = (db.persons || []).filter(p => !p.archived).length;
+      if (currentCount >= 1286) {
+        seedUpdateTargets();
+        saveDB(db);
+        localStorage.setItem(DEMO_SEED_FLAG, '1');
+        return { added: 0 };
+      }
+
       const added = [];
       const total = Math.max(0, 1286 - currentCount);
       let maxSeed = 0;
@@ -685,19 +749,6 @@ const Storage = (function () {
           };
           db.persons.push(p);
           added.push(p);
-          // 部分人员有信息更新记录（仅前40人，控制本地数据体积）
-          if (i < 40 && rnd() < 0.65) {
-            const tp = rnd() < 0.55 ? '1month' : rnd() < 0.5 ? '6month' : '1year';
-            db.updates.push({
-              id: genId('up'), personId: p.id, timePoint: tp,
-              timePointLabel: tp === '1month' ? '刑满释放后1个月' : tp === '6month' ? '刑满释放后6个月' : '刑满释放后1年',
-              address: p.address, occupation: p.occupation, maritalStatus: p.maritalStatus,
-              phone: p.phone, income: pick(['无收入', '2000元以下', '2000-5000元', '2000-5000元', '5000元以上']),
-              skills: pick(['电工', '驾驶', '烹饪', '物流分拣', '家政服务', '']),
-              employmentIntent: pick(['制造业岗位', '服务业岗位', '物流配送', '']),
-              submittedAt: iso(randInt(-60, -2))
-            });
-          }
           // 部分未释放人员生成接送提醒（仅前40人）
           if (i < 40 && releaseOffset > 0 && rnd() < 0.5) {
             db.reminders.push({
@@ -727,6 +778,7 @@ const Storage = (function () {
           });
         }
       }
+      seedUpdateTargets();
       // 补充几条待回复疑问与举报记录，让各端口有数据可看
       const activePersons = db.persons.filter(p => !p.archived);
       const qPersons = activePersons.slice(0, 3);
