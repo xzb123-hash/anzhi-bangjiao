@@ -71,6 +71,15 @@ const Storage = (function () {
       region: '全国', publishDate: isoOffset(-4), createdBy: 'u_civil' },
     { id: 'pol13', title: '最低生活保障申请审核确认办法要点',
       content: '一、共同生活的家庭成员人均收入低于当地低保标准，且家庭财产符合规定的，纳入低保。\n二、申请：向户籍地乡镇（街道）提出申请，签署家庭经济状况核对授权书。\n三、办理时限：一般不超过30个工作日。\n四、低保金按月发放，实行"一卡通"直发到户。',
+      region: '全国', publishDate: isoOffset(-1), createdBy: 'u_civil' },
+    { id: 'pol14', title: '大病保险与医疗救助衔接政策',
+      content: '一、参保居民在基本医保报销后，个人负担的合规医疗费用超过起付线的，纳入大病保险报销。\n二、对困难群众按规定给予医疗救助，实现基本医保、大病保险、医疗救助三重保障有序衔接。\n三、符合条件的刑释人员与普通参保居民享受同等待遇，不因身份受到区别对待。',
+      region: '全国', publishDate: isoOffset(-2), createdBy: 'u_medicare' },
+    { id: 'pol15', title: '职业技能培训补贴申领政策',
+      content: '一、登记失业人员、刑满释放人员等参加职业技能培训并取得相应证书的，按规定给予培训补贴。\n二、补贴标准按培训项目与技能等级确定，可向当地人社部门咨询。\n三、就业困难人员参加培训期间，可按规定申请生活费补贴。',
+      region: '全国', publishDate: isoOffset(-1), createdBy: 'u_hrss' },
+    { id: 'pol16', title: '临时救助政策',
+      content: '一、因突发性、紧迫性、临时性原因导致基本生活暂时出现严重困难的家庭或个人，可申请临时救助。\n二、救助标准根据困难程度确定，原则上不超过当地月低保标准的一定倍数。\n三、申请渠道：户籍地或急难发生地乡镇（街道）民政窗口；情况紧急的可先行救助、后补办手续。',
       region: '全国', publishDate: isoOffset(-1), createdBy: 'u_civil' }
   ];
 

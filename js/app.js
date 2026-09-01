@@ -31,6 +31,8 @@ const App = (function () {
     '上海市·上海市', '北京市·北京市', '四川省·成都市', '湖南省·长沙市', '湖北省·武汉市', '山东省·青岛市'
   ];
 
+  const DEPT_NAMES = { u_judicial: '司法行政', u_hrss: '人社', u_medicare: '医保', u_civil: '民政', u_police: '公安', u_prison: '监狱' };
+
   let state = { view: 'portal', role: null, page: null };
 
   function $(s) { return document.querySelector(s); }
@@ -927,13 +929,16 @@ const App = (function () {
   }
 
   function policiesManagePage(user) {
-    const policies = Storage.getPolicies();
+    const all = Storage.getPolicies();
+    const policies = all.filter(p => p.createdBy === user.id);
     const frag = el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '📢 政策信息发布',
         el('button', { class: 'btn btn-primary btn-sm', onclick: () => policyForm(user) }, '➕ 发布政策')
       ),
+      el('div', { class: 'hint' }, '仅展示本部门（' + (DEPT_NAMES[user.id] || R[user.role].name) + '）发布的政策，共 ' + policies.length + ' 条。'),
       policies.length ? policies.map(p => el('div', { class: 'card card-plain' },
-        el('div', { class: 'card-title' }, p.title, el('span', { class: 'publish-date' }, fmtDate(p.publishDate))),
+        el('div', { class: 'card-title' }, p.title,
+          el('span', { class: 'publish-date' }, (DEPT_NAMES[p.createdBy] || p.createdBy || '') + ' · ' + (p.region || '全国') + ' · ' + fmtDate(p.publishDate))),
         el('p', { class: 'policy-content' }, p.content)
       )) : emptyState('暂无政策')
     );
@@ -1512,7 +1517,7 @@ const App = (function () {
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '📢 最新政策调整（当前地区：' + region + '）'),
       policies.length ? policies.map(pol => el('div', { class: 'card card-plain' },
-        el('div', { class: 'card-title' }, pol.title, el('span', { class: 'publish-date' }, (pol.region || '全国') + ' · ' + fmtDate(pol.publishDate))),
+        el('div', { class: 'card-title' }, pol.title, el('span', { class: 'publish-date' }, (DEPT_NAMES[pol.createdBy] || pol.createdBy || '') + ' · ' + (pol.region || '全国') + ' · ' + fmtDate(pol.publishDate))),
         el('p', { class: 'policy-content' }, pol.content)
       )) : emptyState('暂无政策')
     ));
