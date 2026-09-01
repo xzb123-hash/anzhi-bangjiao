@@ -2139,7 +2139,18 @@ textarea.h-140 { min-height: 140px; }
   white-space: pre-wrap;
 }
 
-/* 政策摘要与展开详情 */
+/* 政策卡片：点击展开原文 */
+.policy-card {
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.policy-card:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.08);
+}
+.policy-card.expanded {
+  border-color: var(--primary-light);
+}
 .policy-source {
   display: inline-block;
   margin: 8px 0 2px;
@@ -2149,26 +2160,16 @@ textarea.h-140 { min-height: 140px; }
   background: rgba(21, 101, 192, 0.08);
   border-radius: 999px;
 }
-.policy-summary {
-  margin: 8px 0 4px;
-  color: var(--text-normal);
-  line-height: 1.75;
-}
-.policy-toggle-row {
+.policy-hint {
   margin-top: 8px;
-}
-.policy-toggle {
-  border: 1px solid var(--border);
-  background: var(--bg-subtle);
-  color: var(--primary);
   font-size: var(--font-sm);
-  padding: 4px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  color: var(--text-light);
 }
-.policy-toggle:hover {
-  background: rgba(21, 101, 192, 0.1);
+.policy-arrow {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--primary);
+  font-weight: 700;
 }
 .policy-detail {
   margin-top: 10px;

@@ -928,25 +928,26 @@ const App = (function () {
     });
   }
 
-  // 政策卡片：摘要 + 来源 + 点击展开详细内容
+  // 政策卡片：点击整张卡片展开/收起原文
   function renderPolicyCard(pol) {
-    const summary = pol.summary || String(pol.content || '').split('\n')[0] || '暂无摘要';
+    let expanded = false;
+    const arrow = el('span', { class: 'policy-arrow' }, '▾');
     const detail = el('div', { class: 'policy-detail' }, pol.content || '暂无详细内容');
     detail.style.display = 'none';
-    let expanded = false;
-    const btn = el('button', { class: 'policy-toggle', type: 'button', onclick: () => {
-      expanded = !expanded;
-      detail.style.display = expanded ? 'block' : 'none';
-      btn.textContent = expanded ? '收起 ▲' : '展开全文 ▾';
-    } }, '展开全文 ▾');
-    return el('div', { class: 'card card-plain' },
+    const card = el('div', { class: 'card card-plain policy-card' },
       el('div', { class: 'card-title' }, pol.title,
         el('span', { class: 'publish-date' }, (DEPT_NAMES[pol.createdBy] || pol.createdBy || '') + ' · ' + (pol.region || '全国') + ' · ' + fmtDate(pol.publishDate))),
       pol.source ? el('div', { class: 'policy-source' }, '📄 ' + pol.source) : null,
-      el('p', { class: 'policy-summary' }, summary),
-      el('div', { class: 'policy-toggle-row' }, btn),
+      el('div', { class: 'policy-hint' }, '点击卡片查看原文', arrow),
       detail
     );
+    card.addEventListener('click', () => {
+      expanded = !expanded;
+      detail.style.display = expanded ? 'block' : 'none';
+      card.classList.toggle('expanded', expanded);
+      arrow.textContent = expanded ? '▴' : '▾';
+    });
+    return card;
   }
 
   function policiesManagePage(user) {
