@@ -576,7 +576,6 @@ const App = (function () {
     const persons = Storage.getPersons().filter(p => p.createdBy === user.id);
     const all = Storage.getPersons();
     const frag = el('div', {});
-    frag.appendChild(todayLawCard());
     frag.appendChild(statGrid([
       { value: persons.length, label: '我上传的档案数', cls: '' },
       { value: all.length, label: '系统总档案数', cls: 'success' },
@@ -673,7 +672,6 @@ const App = (function () {
     const reminders = Storage.getReminders();
     const pending = reminders.filter(r => !r.confirmed);
     const frag = el('div', {});
-    frag.appendChild(todayLawCard());
     frag.appendChild(statGrid([
       { value: persons.length, label: '在册刑释人员', cls: '' },
       { value: reminders.length, label: '已发送提醒', cls: 'success' },
@@ -791,7 +789,6 @@ const App = (function () {
     const persons = Storage.getPersons();
     const pendingReminders = Storage.getPendingReminders();
     const frag = el('div', {});
-    frag.appendChild(todayLawCard());
     frag.appendChild(statGrid([
       { value: persons.length, label: '在册人员', cls: '' },
       { value: persons.filter(p => p.riskLevel === 'high').length, label: '高风险', cls: 'danger' },
@@ -1061,7 +1058,7 @@ const App = (function () {
     const frag = el('div', {});
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '📚 相关法律'),
-      el('div', { class: 'hint' }, '与刑释人员社会保障、安置帮教相关的法律法规（要点摘编），点击查看全文。')
+      el('div', { class: 'hint' }, '与刑释人员社会保障、安置帮教相关的法律法规原文，点击查看全文。')
     ));
     laws.forEach(l => {
       frag.appendChild(el('div', { class: 'card card-plain law-item', onclick: () => showLawText(l) },
@@ -1111,7 +1108,7 @@ const App = (function () {
     frag.appendChild(statGrid(statMap[user.role] || []));
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, R[user.role].name + ' · 工作提示'),
-      el('p', { class: 'u-text-muted' }, RD[user.role] + '。左侧导航进入对应业务页面；如有政策或平台操作问题，可随时咨询右下角「小安」。')
+      el('p', { class: 'u-text-muted' }, RD[user.role] + '。左侧导航进入对应业务页面；如有政策或平台操作问题，请联系平台管理员。')
     ));
     return frag;
   }
