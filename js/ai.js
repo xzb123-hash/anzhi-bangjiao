@@ -80,8 +80,7 @@ const AI = (function () {
     );
 
     let level, levelText;
-    if (score >= 65) { level = 'high'; levelText = '高风险'; }
-    else if (score >= 45) { level = 'medium'; levelText = '中等风险'; }
+    if (score >= 60) { level = 'high'; levelText = '高风险'; }
     else { level = 'low'; levelText = '低风险'; }
 
     // 影响因素分析
@@ -121,8 +120,6 @@ const AI = (function () {
     let advice;
     if (level === 'high') {
       advice = '建议实行严格帮教服务，加强日常走访和心理辅导，定期进行法治教育，同时积极协助解决就业和家庭问题，降低再犯风险。';
-    } else if (level === 'medium') {
-      advice = '建议实行常规帮教服务，定期关注人员动态，提供就业指导和心理支持，鼓励参与社区公益活动，促进顺利融入社会。';
     } else {
       advice = '建议实行灵活帮教服务，以自我报告为主，定期收集信息更新。重点提供就业推荐和社会适应指导，帮助顺利回归社会。';
     }
@@ -222,18 +219,18 @@ const AI = (function () {
         occupation: person.occupation || '',
         ruleScore: base.score
       };
-      const sys = '你是安置帮教领域的资深司法社工。请根据刑释人员信息给出风险评级建议，只输出 JSON：{"level":"high|medium|low","score":0-100(整数), "analysis":"影响因素简要分析(100字内)", "advice":"帮教建议(150字内)"}';
+      const sys = '你是安置帮教领域的资深司法社工。请根据刑释人员信息给出风险评级建议，只输出 JSON：{"level":"high|low","score":0-100(整数), "analysis":"影响因素简要分析(100字内)", "advice":"帮教建议(150字内)"}';
       const reply = await XiaoAn.request([
         { role: 'system', content: sys },
         { role: 'user', content: JSON.stringify(data) }
       ]);
       const parsed = parseJsonReply(reply);
       if (parsed && parsed.level && parsed.score !== undefined) {
-        const level = parsed.level === 'high' ? 'high' : parsed.level === 'low' ? 'low' : 'medium';
+        const level = parsed.level === 'high' ? 'high' : 'low';
         const score = Math.max(0, Math.min(100, parseInt(parsed.score, 10) || base.score));
         return {
           level,
-          levelText: level === 'high' ? '高风险' : level === 'low' ? '低风险' : '中等风险',
+          levelText: level === 'high' ? '高风险' : '低风险',
           score,
           analysis: parsed.analysis || '',
           advice: parsed.advice || base.advice,

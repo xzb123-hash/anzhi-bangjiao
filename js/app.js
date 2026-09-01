@@ -111,7 +111,7 @@ const App = (function () {
   function riskTag(level) {
     if (level === 'high') return tag('高风险', 'tag-high');
     if (level === 'low') return tag('低风险', 'tag-low');
-    return tag('中等风险', 'tag-medium');
+    return tag('未评级', 'tag-pending');
   }
 
   function table(headers, rows) {
@@ -647,21 +647,55 @@ const App = (function () {
     render();
   }
 
+  // 分页条（1 2 3 4 5 … N 样式）
+  function pagerEl(page, totalPages, onChange) {
+    const wrap = el('div', { class: 'pager' });
+    const add = (label, target, active, disabled) => {
+      wrap.appendChild(el('button', { class: 'pager-btn' + (active ? ' active' : ''), disabled: disabled, onclick: () => { if (target !== page) onChange(target); } }, label));
+    };
+    add('‹ 上一页', page - 1, false, page <= 1);
+    const nums = [...new Set([1, 2, 3, 4, 5, totalPages, page])].filter(n => n >= 1 && n <= totalPages).sort((a, b) => a - b);
+    let prev = 0;
+    nums.forEach(n => {
+      if (prev && n - prev > 1) wrap.appendChild(el('span', { class: 'pager-dots' }, '…'));
+      add(String(n), n, n === page, false);
+      prev = n;
+    });
+    add('下一页 ›', page + 1, false, page >= totalPages);
+    return wrap;
+  }
+
+  // 分页档案列表（20条/页；前5页完整信息，其余页仅登记姓名）
+  function paginatedPersonsCard(user, persons, opts) {
+    const PAGE_SIZE = 20;
+    const totalPages = Math.max(1, Math.ceil(persons.length / PAGE_SIZE));
+    const holder = el('div', {});
+    let page = 1;
+    const draw = () => {
+      holder.innerHTML = '';
+      const start = (page - 1) * PAGE_SIZE;
+      const slice = persons.slice(start, start + PAGE_SIZE);
+      holder.appendChild(el('div', { class: 'hint' }, opts.hint(persons.length, page, totalPages)));
+      holder.appendChild(table(opts.headers, slice.map(p => opts.row(p))));
+      if (totalPages > 1) holder.appendChild(pagerEl(page, totalPages, p => { page = p; draw(); }));
+    };
+    draw();
+    return holder;
+  }
+
   function personsListPage(user, role) {
     const persons = Storage.getPersons();
     const frag = el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '📁 刑释人员档案列表',
         role === 'police' ? el('button', { class: 'btn btn-primary btn-sm', onclick: () => { state.page = 'upload'; render(); } }, '⬆️ 上传档案') : null
       ),
-      persons.length ? el('div', {},
-        el('div', { class: 'hint' }, '共 ' + persons.length + ' 名在册人员，仅展示前 100 人。'),
-        table(
-          ['姓名', '性别', '年龄', '所犯罪行', '释放日期', '风险', '帮教服务', '操作'],
-          persons.slice(0, 100).map(p => [p.name, p.gender, p.age, p.crime, fmtDate(p.releaseDate), riskTag(p.riskLevel),
-            p.serviceType ? (p.serviceType === 'strict' ? tag('严格', 'tag-strict') : tag('灵活', 'tag-flexible')) : '-',
-            el('button', { class: 'btn btn-outline btn-sm', onclick: () => personDetailModal(p.id) }, '详情')])
-        )
-      ) : emptyState('暂无档案')
+      persons.length ? paginatedPersonsCard(user, persons, {
+        headers: ['姓名', '性别', '年龄', '所犯罪行', '释放日期', '风险', '帮教服务', '操作'],
+        hint: (n, page, totalPages) => '共 ' + n + ' 名在册人员，第 ' + page + ' / ' + totalPages + ' 页（每页 20 条，前 5 页为完整档案，其余仅登记姓名）。',
+        row: (p) => [p.name, p.gender, p.age, p.crime, fmtDate(p.releaseDate), riskTag(p.riskLevel),
+          p.serviceType ? (p.serviceType === 'strict' ? tag('严格', 'tag-strict') : tag('灵活', 'tag-flexible')) : '-',
+          el('button', { class: 'btn btn-outline btn-sm', onclick: () => personDetailModal(p.id) }, '详情')]
+      }) : emptyState('暂无档案')
     );
     return frag;
   }
@@ -694,14 +728,14 @@ const App = (function () {
     const persons = Storage.getPersons();
     const frag = el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '📋 服刑档案管理'),
-      el('div', { class: 'hint' }, '上传/更新服刑期间档案信息，保存后将同步传送至司法行政部门系统。共 ' + persons.length + ' 名在册人员，仅展示前 100 人。'),
-      table(
-        ['姓名', '所犯罪行', '刑期', '释放日期', '狱内表现', '操作'],
-        persons.slice(0, 100).map(p => [
+      paginatedPersonsCard(user, persons, {
+        headers: ['姓名', '所犯罪行', '刑期', '释放日期', '狱内表现', '操作'],
+        hint: (n, page, totalPages) => '上传/更新服刑期间档案信息，保存后将同步传送至司法行政部门系统。共 ' + n + ' 名在册人员，第 ' + page + ' / ' + totalPages + ' 页（每页 20 条，前 5 页为完整档案，其余仅登记姓名）。',
+        row: (p) => [
           p.name, p.crime, p.sentence, fmtDate(p.releaseDate), p.prisonPerformance || '-',
           el('button', { class: 'btn btn-primary btn-sm', onclick: () => prisonUploadRecord(user, p) }, '上传/更新服刑档案')
-        ])
-      )
+        ]
+      })
     );
     return frag;
   }
@@ -1261,7 +1295,6 @@ const App = (function () {
     });
     const highRisk = persons.filter(p => p.riskLevel === 'high').length;
     const lowRisk = persons.filter(p => p.riskLevel === 'low').length;
-    const mediumRisk = Math.max(0, persons.length - highRisk - lowRisk);
     const frag = el('div', {});
     frag.appendChild(statGrid([
       { value: '7945', label: '历史帮教人数', cls: '' },
@@ -1292,7 +1325,6 @@ const App = (function () {
         el('div', { class: 'card-title' }, '⚠️ 风险分布'),
         barChart([
           { label: '高风险', value: highRisk, color: 'var(--danger)' },
-          { label: '中等风险', value: mediumRisk, color: 'var(--warning)' },
           { label: '低风险', value: lowRisk, color: 'var(--success)' }
         ])
       )

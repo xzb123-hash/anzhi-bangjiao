@@ -588,8 +588,14 @@ const Storage = (function () {
       } else {
         mergeExtraData(db);
       }
+      // 风险等级统一为低/高：历史中等风险重新划分到低/高风险
+      (db.persons || []).forEach(p => {
+        if (p.riskLevel === 'medium') {
+          p.riskLevel = (p.serviceType === 'strict' || String(p.prisonPerformance || '').indexOf('较差') >= 0) ? 'high' : 'low';
+        }
+      });
       const currentCount = (db.persons || []).filter(p => !p.archived).length;
-      if (currentCount >= 1200) {
+      if (currentCount >= 1286) {
         saveDB(db);
         localStorage.setItem(DEMO_SEED_FLAG, '1');
         return { added: 0 };
@@ -640,59 +646,82 @@ const Storage = (function () {
       const today = new Date();
       const iso = (offset) => { const dt = new Date(today); dt.setDate(dt.getDate() + offset); return dt.toISOString().slice(0, 10); };
       const added = [];
-      const total = Math.max(0, 1200 - currentCount);
+      const total = Math.max(0, 1286 - currentCount);
+      let maxSeed = 0;
+      (db.persons || []).forEach(x => { const m = /^seedp_(\d+)$/.exec(x.id); if (m) maxSeed = Math.max(maxSeed, parseInt(m[1], 10)); });
       for (let i = 0; i < total; i++) {
-        const crime = pick(crimeList);
+        const idx = currentCount + i;
         const rg = pick(regions);
         const prov = rg[0], city = rg[1];
         const gender = rnd() < 0.82 ? '男' : '女';
         const age = randInt(21, 54);
-        const riskSeed = crime[1] + (perfs.indexOf(pick(perfs)) >= 2 ? 15 : 0);
-        const riskLevel = riskSeed >= 65 ? 'high' : riskSeed >= 48 ? 'medium' : 'low';
         const releaseOffset = randInt(-85, 55);
-        const p = {
-          id: 'seedp_' + (i + 1),
-          name: pick(surnames) + '某某',
-          gender: gender, age: age,
-          idCard: String(randInt(110101, 361199)) + String(randInt(19800101, 20031231)) + String(randInt(1000, 9999)),
-          crime: crime[0],
-          sentence: sentenceOf(crime[1]),
-          releaseDate: iso(releaseOffset),
-          prisonPerformance: pick(perfs),
-          riskLevel: riskLevel,
-          serviceType: riskLevel === 'high' ? 'strict' : pick(['flexible', 'flexible', 'strict']),
-          serviceChoiceMade: true,
-          address: city + '市' + pick(districts) + pick(streets) + randInt(1, 199) + '号',
-          occupation: pick(occupations),
-          maritalStatus: pick(['未婚', '未婚', '已婚', '已婚', '离异']),
-          phone: phoneOf(),
-          province: prov, city: city, region: prov + '·' + city,
-          createdBy: 'u_police',
-          createdAt: iso(releaseOffset - randInt(30, 90))
-        };
-        db.persons.push(p);
-        added.push(p);
-        // 部分人员有信息更新记录（仅前40人，控制本地数据体积）
-        if (i < 40 && rnd() < 0.65) {
-          const tp = rnd() < 0.55 ? '1month' : rnd() < 0.5 ? '6month' : '1year';
-          db.updates.push({
-            id: genId('up'), personId: p.id, timePoint: tp,
-            timePointLabel: tp === '1month' ? '刑满释放后1个月' : tp === '6month' ? '刑满释放后6个月' : '刑满释放后1年',
-            address: p.address, occupation: p.occupation, maritalStatus: p.maritalStatus,
-            phone: p.phone, income: pick(['无收入', '2000元以下', '2000-5000元', '2000-5000元', '5000元以上']),
-            skills: pick(['电工', '驾驶', '烹饪', '物流分拣', '家政服务', '']),
-            employmentIntent: pick(['制造业岗位', '服务业岗位', '物流配送', '']),
-            submittedAt: iso(randInt(-60, -2))
-          });
-        }
-        // 部分未释放人员生成接送提醒（仅前40人）
-        if (i < 40 && releaseOffset > 0 && rnd() < 0.5) {
-          db.reminders.push({
-            id: genId('r'), personId: p.id, personName: p.name, releaseDate: p.releaseDate,
-            stage: pick(['30day', '15day', '7day']),
-            message: p.name + '将于' + p.releaseDate + '刑满释放，请司法行政部门确认接送安排。',
-            confirmed: rnd() < 0.4, confirmedAt: rnd() < 0.4 ? iso(-1) : null,
-            createdBy: 'u_prison', createdAt: iso(-randInt(2, 20))
+        if (idx < 100) {
+          // 前 100 人（前 5 页）：完整档案信息
+          const crime = pick(crimeList);
+          const riskSeed = crime[1] + (perfs.indexOf(pick(perfs)) >= 2 ? 15 : 0);
+          const riskLevel = riskSeed >= 65 ? 'high' : 'low';
+          const p = {
+            id: 'seedp_' + (maxSeed + i + 1),
+            name: pick(surnames) + '某某',
+            gender: gender, age: age,
+            idCard: String(randInt(110101, 361199)) + String(randInt(19800101, 20031231)) + String(randInt(1000, 9999)),
+            crime: crime[0],
+            sentence: sentenceOf(crime[1]),
+            releaseDate: iso(releaseOffset),
+            prisonPerformance: pick(perfs),
+            riskLevel: riskLevel,
+            serviceType: riskLevel === 'high' ? 'strict' : pick(['flexible', 'flexible', 'strict']),
+            serviceChoiceMade: true,
+            address: city + '市' + pick(districts) + pick(streets) + randInt(1, 199) + '号',
+            occupation: pick(occupations),
+            maritalStatus: pick(['未婚', '未婚', '已婚', '已婚', '离异']),
+            phone: phoneOf(),
+            province: prov, city: city, region: prov + '·' + city,
+            createdBy: 'u_police',
+            createdAt: iso(releaseOffset - randInt(30, 90))
+          };
+          db.persons.push(p);
+          added.push(p);
+          // 部分人员有信息更新记录（仅前40人，控制本地数据体积）
+          if (i < 40 && rnd() < 0.65) {
+            const tp = rnd() < 0.55 ? '1month' : rnd() < 0.5 ? '6month' : '1year';
+            db.updates.push({
+              id: genId('up'), personId: p.id, timePoint: tp,
+              timePointLabel: tp === '1month' ? '刑满释放后1个月' : tp === '6month' ? '刑满释放后6个月' : '刑满释放后1年',
+              address: p.address, occupation: p.occupation, maritalStatus: p.maritalStatus,
+              phone: p.phone, income: pick(['无收入', '2000元以下', '2000-5000元', '2000-5000元', '5000元以上']),
+              skills: pick(['电工', '驾驶', '烹饪', '物流分拣', '家政服务', '']),
+              employmentIntent: pick(['制造业岗位', '服务业岗位', '物流配送', '']),
+              submittedAt: iso(randInt(-60, -2))
+            });
+          }
+          // 部分未释放人员生成接送提醒（仅前40人）
+          if (i < 40 && releaseOffset > 0 && rnd() < 0.5) {
+            db.reminders.push({
+              id: genId('r'), personId: p.id, personName: p.name, releaseDate: p.releaseDate,
+              stage: pick(['30day', '15day', '7day']),
+              message: p.name + '将于' + p.releaseDate + '刑满释放，请司法行政部门确认接送安排。',
+              confirmed: rnd() < 0.4, confirmedAt: rnd() < 0.4 ? iso(-1) : null,
+              createdBy: 'u_prison', createdAt: iso(-randInt(2, 20))
+            });
+          }
+        } else {
+          // 其余 1186 人：仅登记姓名与基础信息（挂名档案）
+          const crime = pick(crimeList);
+          const riskLevel = (crime[1] + (rnd() < 0.3 ? 15 : 0)) >= 65 ? 'high' : 'low';
+          db.persons.push({
+            id: 'seedp_' + (maxSeed + i + 1),
+            name: pick(surnames) + '某某',
+            gender: gender, age: age,
+            riskLevel: riskLevel,
+            serviceType: riskLevel === 'high' ? 'strict' : 'flexible',
+            serviceChoiceMade: true,
+            occupation: pick(occupations),
+            province: prov, city: city, region: prov + '·' + city,
+            releaseDate: iso(releaseOffset),
+            createdBy: 'u_police',
+            createdAt: iso(releaseOffset - randInt(30, 90))
           });
         }
       }

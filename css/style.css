@@ -2139,6 +2139,43 @@ textarea.h-140 { min-height: 140px; }
   white-space: pre-wrap;
 }
 
+/* 分页条 */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+.pager-btn {
+  min-width: 32px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-normal);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-sm);
+}
+.pager-btn:hover:not(:disabled):not(.active) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.pager-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.pager-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.pager-dots {
+  color: var(--text-light);
+  padding: 0 2px;
+}
+
 /* 政策卡片：点击展开原文 */
 .policy-card {
   cursor: pointer;
