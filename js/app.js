@@ -928,6 +928,27 @@ const App = (function () {
     });
   }
 
+  // 政策卡片：摘要 + 来源 + 点击展开详细内容
+  function renderPolicyCard(pol) {
+    const summary = pol.summary || String(pol.content || '').split('\n')[0] || '暂无摘要';
+    const detail = el('div', { class: 'policy-detail' }, pol.content || '暂无详细内容');
+    detail.style.display = 'none';
+    let expanded = false;
+    const btn = el('button', { class: 'policy-toggle', type: 'button', onclick: () => {
+      expanded = !expanded;
+      detail.style.display = expanded ? 'block' : 'none';
+      btn.textContent = expanded ? '收起 ▲' : '展开全文 ▾';
+    } }, '展开全文 ▾');
+    return el('div', { class: 'card card-plain' },
+      el('div', { class: 'card-title' }, pol.title,
+        el('span', { class: 'publish-date' }, (DEPT_NAMES[pol.createdBy] || pol.createdBy || '') + ' · ' + (pol.region || '全国') + ' · ' + fmtDate(pol.publishDate))),
+      pol.source ? el('div', { class: 'policy-source' }, '📄 ' + pol.source) : null,
+      el('p', { class: 'policy-summary' }, summary),
+      el('div', { class: 'policy-toggle-row' }, btn),
+      detail
+    );
+  }
+
   function policiesManagePage(user) {
     const all = Storage.getPolicies();
     const policies = all.filter(p => p.createdBy === user.id);
@@ -936,11 +957,7 @@ const App = (function () {
         el('button', { class: 'btn btn-primary btn-sm', onclick: () => policyForm(user) }, '➕ 发布政策')
       ),
       el('div', { class: 'hint' }, '仅展示本部门（' + (DEPT_NAMES[user.id] || R[user.role].name) + '）发布的政策，共 ' + policies.length + ' 条。'),
-      policies.length ? policies.map(p => el('div', { class: 'card card-plain' },
-        el('div', { class: 'card-title' }, p.title,
-          el('span', { class: 'publish-date' }, (DEPT_NAMES[p.createdBy] || p.createdBy || '') + ' · ' + (p.region || '全国') + ' · ' + fmtDate(p.publishDate))),
-        el('p', { class: 'policy-content' }, p.content)
-      )) : emptyState('暂无政策')
+      policies.length ? policies.map(p => renderPolicyCard(p)) : emptyState('暂无政策')
     );
     return frag;
   }
@@ -1516,10 +1533,7 @@ const App = (function () {
     frag.appendChild(regionSelectControl(user, person));
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '📢 最新政策调整（当前地区：' + region + '）'),
-      policies.length ? policies.map(pol => el('div', { class: 'card card-plain' },
-        el('div', { class: 'card-title' }, pol.title, el('span', { class: 'publish-date' }, (DEPT_NAMES[pol.createdBy] || pol.createdBy || '') + ' · ' + (pol.region || '全国') + ' · ' + fmtDate(pol.publishDate))),
-        el('p', { class: 'policy-content' }, pol.content)
-      )) : emptyState('暂无政策')
+      policies.length ? policies.map(pol => renderPolicyCard(pol)) : emptyState('暂无政策')
     ));
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '💼 企业招聘信息'),
