@@ -366,7 +366,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled {
   align-items: center;
   width: 100%;
 }
-.portal-row.center { margin: 6px 0; }
+.portal-row.center { margin: 6px 0; gap: 28px; }
 
 .flow-connector {
   flex: 1;

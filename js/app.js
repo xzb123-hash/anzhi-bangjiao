@@ -190,7 +190,7 @@ const App = (function () {
   }
 
   // ===== 门户选择页 =====
-  function portalCard(role, cfg, order, highlighted) {
+  function portalCard(role, cfg, order, highlighted, badgeText) {
     const cls = 'portal-card' + (highlighted ? ' highlighted' : '');
     return el('div', {
       class: cls,
@@ -199,7 +199,7 @@ const App = (function () {
       role: 'button', tabindex: '0', 'aria-label': '进入' + cfg.name,
       style: 'animation-delay:' + (order * 0.12 + 0.3) + 's;'
     },
-      highlighted ? el('div', { class: 'highlight-badge' }, '核心中枢') : null,
+      highlighted ? el('div', { class: 'highlight-badge' }, badgeText || '核心中枢') : null,
       el('div', { class: 'card-glow' }),
       el('span', { class: 'icon' }, cfg.icon),
       el('h3', {}, cfg.name),
@@ -283,34 +283,20 @@ const App = (function () {
       )
     ));
 
-    // 五方端口布局：上2（公安+监狱）- 中1（司法行政，居中突出）- 下2（志愿者+刑释人员）
-    const flowRow = el('div', { class: 'flow-row' },
-      el('div', { class: 'flow-label left' }, '📥 档案接入层'),
-      el('div', { class: 'flow-label right' }, '📤 管理执行层')
-    );
+    // 七方端口布局：上3（公安+监狱+志愿者）- 中2（司法行政+刑释人员，大卡居中）- 下3（人社+医保+民政）
     const topRow = el('div', { class: 'portal-row top' });
-    ['police', 'prison'].forEach((role, i) => {
-      const cfg = R[role];
-      topRow.appendChild(portalCard(role, cfg, i + 1));
+    [['police', 1], ['prison', 2], ['volunteer', 3]].forEach(item => {
+      topRow.appendChild(portalCard(item[0], R[item[0]], item[1]));
     });
     const centerRow = el('div', { class: 'portal-row center' });
-    centerRow.appendChild(el('div', { class: 'flow-connector left' }));
-    centerRow.appendChild(portalCard('judicial', R['judicial'], 3, true));
-    centerRow.appendChild(el('div', { class: 'flow-connector right' }));
-
+    centerRow.appendChild(portalCard('judicial', R['judicial'], 4, true, '核心中枢'));
+    centerRow.appendChild(portalCard('released', R['released'], 5, true, '重点服务对象'));
     const deptRow = el('div', { class: 'portal-row three' });
-    ['hrss', 'medicare', 'civil'].forEach((role, i) => {
-      const cfg = R[role];
-      deptRow.appendChild(portalCard(role, cfg, i + 4));
+    [['hrss', 6], ['medicare', 7], ['civil', 8]].forEach(item => {
+      deptRow.appendChild(portalCard(item[0], R[item[0]], item[1]));
     });
 
-    const bottomRow = el('div', { class: 'portal-row bottom' });
-    ['volunteer', 'released'].forEach((role, i) => {
-      const cfg = R[role];
-      bottomRow.appendChild(portalCard(role, cfg, i + 7));
-    });
-
-    const grid = el('div', { class: 'portal-layout' }, topRow, centerRow, deptRow, bottomRow);
+    const grid = el('div', { class: 'portal-layout' }, topRow, centerRow, deptRow);
     wrap.appendChild(grid);
 
     // ===== 业务流程图 =====
