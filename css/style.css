@@ -363,7 +363,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled {
   display: flex;
   gap: 22px;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
 }
 .portal-row.center { margin: 6px 0; gap: 28px; }
@@ -394,6 +394,10 @@ button:disabled, input:disabled, select:disabled, textarea:disabled {
 .portal-card,
 .portal-card.highlighted {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 318px;
   min-height: 198px;
   padding: 26px 22px 20px;
