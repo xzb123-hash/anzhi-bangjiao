@@ -963,7 +963,6 @@ const App = (function () {
 
   // 政策卡片：点击整张卡片展开/收起原文
   function renderPolicyCard(pol) {
-    let expanded = false;
     const arrow = el('span', { class: 'policy-arrow' }, '▾');
     const detail = el('div', { class: 'policy-detail' }, pol.content || '暂无详细内容');
     detail.style.display = 'none';
@@ -974,12 +973,14 @@ const App = (function () {
       el('div', { class: 'policy-hint' }, '点击卡片查看原文', arrow),
       detail
     );
-    card.addEventListener('click', () => {
-      expanded = !expanded;
-      detail.style.display = expanded ? 'block' : 'none';
-      card.classList.toggle('expanded', expanded);
-      arrow.textContent = expanded ? '▴' : '▾';
-    });
+    card._expanded = false;
+    card._setExpanded = (open) => {
+      card._expanded = !!open;
+      detail.style.display = card._expanded ? 'block' : 'none';
+      card.classList.toggle('expanded', card._expanded);
+      arrow.textContent = card._expanded ? '▴' : '▾';
+    };
+    card.addEventListener('click', () => card._setExpanded(!card._expanded));
     return card;
   }
 
@@ -1571,9 +1572,18 @@ const App = (function () {
     const jobs = Storage.getJobs();
     const frag = el('div', {});
     frag.appendChild(regionSelectControl(user, person));
+    const policyList = el('div', {});
+    const policyToggleBtn = el('button', { class: 'btn btn-outline btn-sm', onclick: (e) => {
+      e.stopPropagation();
+      const cards = policyList.querySelectorAll('.policy-card');
+      const anyClosed = Array.from(cards).some(c => !c._expanded);
+      cards.forEach(c => c._setExpanded(anyClosed));
+      policyToggleBtn.textContent = anyClosed ? '收起全部 ▲' : '显示更多 ▾';
+    } }, '显示更多 ▾');
+    policies.forEach(pol => policyList.appendChild(renderPolicyCard(pol)));
     frag.appendChild(el('div', { class: 'card' },
-      el('div', { class: 'card-title' }, '📢 最新政策调整（当前地区：' + region + '）'),
-      policies.length ? policies.map(pol => renderPolicyCard(pol)) : emptyState('暂无政策')
+      el('div', { class: 'card-title' }, '📢 最新政策调整（当前地区：' + region + '）', policyToggleBtn),
+      policies.length ? policyList : emptyState('暂无政策')
     ));
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '💼 企业招聘信息'),

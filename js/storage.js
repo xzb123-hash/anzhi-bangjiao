@@ -619,13 +619,20 @@ const Storage = (function () {
         ['浙江省', '杭州市'], ['浙江省', '宁波市'], ['浙江省', '温州市'],
         ['江苏省', '南京市'], ['江苏省', '苏州市'],
         ['福建省', '厦门市'], ['福建省', '福州市'],
+        ['山东省', '济南市'], ['山东省', '青岛市'],
+        ['河南省', '郑州市'], ['河南省', '洛阳市'],
+        ['四川省', '成都市'], ['四川省', '绵阳市'],
+        ['湖南省', '长沙市'], ['湖北省', '武汉市'],
+        ['安徽省', '合肥市'], ['河北省', '石家庄市'],
+        ['陕西省', '西安市'], ['广西壮族自治区', '南宁市'],
+        ['云南省', '昆明市'], ['辽宁省', '沈阳市'],
+        ['贵州省', '贵阳市'], ['重庆市', '重庆市'],
         ['上海市', '上海市'], ['北京市', '北京市'],
-        ['四川省', '成都市'], ['湖南省', '长沙市'], ['湖北省', '武汉市'], ['山东省', '青岛市'],
-        ['安徽省', '合肥市'], ['河南省', '郑州市'], ['河北省', '石家庄市'], ['陕西省', '西安市'],
-        ['云南省', '昆明市'], ['贵州省', '贵阳市'], ['广西壮族自治区', '南宁市'],
-        ['辽宁省', '沈阳市'], ['吉林省', '长春市'], ['黑龙江省', '哈尔滨市'],
-        ['内蒙古自治区', '呼和浩特市'], ['山西省', '太原市'], ['海南省', '海口市'],
-        ['重庆市', '重庆市'], ['天津市', '天津市'], ['宁夏回族自治区', '银川市'], ['青海省', '西宁市'], ['新疆维吾尔自治区', '乌鲁木齐市']
+        ['山西省', '太原市'], ['黑龙江省', '哈尔滨市'],
+        ['吉林省', '长春市'], ['内蒙古自治区', '呼和浩特市'],
+        ['新疆维吾尔自治区', '乌鲁木齐市'], ['甘肃省', '兰州市'],
+        ['海南省', '海口市'], ['天津市', '天津市'],
+        ['宁夏回族自治区', '银川市'], ['青海省', '西宁市'], ['西藏自治区', '拉萨市']
       ];
       // 省份分布均衡：确保每个省份至少 6 人（首次迁移，幂等）
       if (!localStorage.getItem('azbj_region_v2')) {
@@ -674,6 +681,40 @@ const Storage = (function () {
 
       const today = new Date();
       const iso = (offset) => { const dt = new Date(today); dt.setDate(dt.getDate() + offset); return dt.toISOString().slice(0, 10); };
+      // 省级分布目标：31 个省级行政区全覆盖、人数差异化（首次迁移，幂等）
+      const provTargets = [
+        { prov: '江西省', count: 236 }, { prov: '广东省', count: 118 }, { prov: '浙江省', count: 100 },
+        { prov: '江苏省', count: 90 }, { prov: '山东省', count: 74 }, { prov: '河南省', count: 68 },
+        { prov: '四川省', count: 63 }, { prov: '湖南省', count: 57 }, { prov: '湖北省', count: 52 },
+        { prov: '安徽省', count: 48 }, { prov: '福建省', count: 45 }, { prov: '河北省', count: 40 },
+        { prov: '陕西省', count: 32 }, { prov: '广西壮族自治区', count: 28 }, { prov: '云南省', count: 26 },
+        { prov: '辽宁省', count: 25 }, { prov: '贵州省', count: 22 }, { prov: '重庆市', count: 20 },
+        { prov: '上海市', count: 19 }, { prov: '北京市', count: 18 }, { prov: '山西省', count: 16 },
+        { prov: '黑龙江省', count: 14 }, { prov: '吉林省', count: 13 }, { prov: '内蒙古自治区', count: 12 },
+        { prov: '新疆维吾尔自治区', count: 11 }, { prov: '甘肃省', count: 10 }, { prov: '海南省', count: 8 },
+        { prov: '天津市', count: 7 }, { prov: '宁夏回族自治区', count: 6 }, { prov: '青海省', count: 5 },
+        { prov: '西藏自治区', count: 3 }
+      ];
+      const buildRegionSlots = () => {
+        const slots = [];
+        provTargets.forEach(t => {
+          const cityList = regions.filter(r => r[0] === t.prov).map(r => r[1]);
+          const cities = cityList.length ? cityList : [t.prov];
+          for (let i = 0; i < t.count; i++) slots.push({ prov: t.prov, city: cities[i % cities.length] });
+        });
+        return slots;
+      };
+      const applyRegionTargets = () => {
+        if (localStorage.getItem('azbj_region_v3')) return;
+        const regionSlots = buildRegionSlots();
+        const activeNow = db.persons.filter(p => !p.archived);
+        activeNow.forEach((p, i) => {
+          const slot = regionSlots[i % regionSlots.length];
+          p.province = slot.prov; p.city = slot.city; p.region = slot.prov + '·' + slot.city;
+          if (p.address) p.address = slot.city + '市' + pick(districts) + pick(streets) + randInt(1, 199) + '号';
+        });
+        localStorage.setItem('azbj_region_v3', '1');
+      };
       // 信息更新完成率：1月→5年人数均匀递减（层级包含、幂等补齐）
       const updateTargets = [
         { tp: '1month', label: '刑满释放后1个月', count: 1215 },
@@ -705,6 +746,7 @@ const Storage = (function () {
       };
       const currentCount = (db.persons || []).filter(p => !p.archived).length;
       if (currentCount >= 1286) {
+        applyRegionTargets();
         seedUpdateTargets();
         saveDB(db);
         localStorage.setItem(DEMO_SEED_FLAG, '1');
@@ -778,6 +820,7 @@ const Storage = (function () {
           });
         }
       }
+      applyRegionTargets();
       seedUpdateTargets();
       // 补充几条待回复疑问与举报记录，让各端口有数据可看
       const activePersons = db.persons.filter(p => !p.archived);
