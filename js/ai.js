@@ -136,11 +136,10 @@ const AI = (function () {
   // 数据分析统计
   function analyzeStats() {
     const persons = Storage.getPersons();
+    const updatesMap = {};
+    (Storage.getUpdates() || []).forEach(u => { (updatesMap[u.personId] = updatesMap[u.personId] || []).push(u); });
     const updates = [];
-    persons.forEach(p => {
-      const ups = Storage.getUpdatesByPerson(p.id);
-      ups.forEach(u => updates.push(u));
-    });
+    persons.forEach(p => { (updatesMap[p.id] || []).forEach(u => updates.push(u)); });
 
     const total = persons.length;
     const employed = persons.filter(p => p.occupation && p.occupation !== '待业' && p.occupation !== '无').length;
@@ -170,7 +169,7 @@ const AI = (function () {
 
     const updateCompletion = timePoints.map(tp => {
       const completed = persons.filter(p =>
-        Storage.getUpdatesByPerson(p.id).some(u => u.timePoint === tp.key)
+        (updatesMap[p.id] || []).some(u => u.timePoint === tp.key)
       ).length;
       return {
         key: tp.key,

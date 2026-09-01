@@ -323,6 +323,8 @@ const Storage = (function () {
     return getDB().updates.filter(u => u.personId === personId);
   }
 
+  function getUpdates() { return getDB().updates || []; }
+
   function addUpdate(update, user) {
     const db = getDB();
     const u = {
@@ -763,7 +765,7 @@ const Storage = (function () {
   return {
     login, getCurrentUser, setCurrentUser,
     getPersons, getPerson, addPerson, updatePerson, setRiskLevel, chooseService,
-    getUpdatesByPerson, addUpdate,
+    getUpdatesByPerson, getUpdates, addUpdate,
     getQuestions, getQuestionsByPerson, getPendingQuestions, addQuestion, replyQuestion,
     getReminders, getPendingReminders, addReminder, confirmReminder,
     getJobs, addJob, deleteJob,

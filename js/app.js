@@ -651,7 +651,9 @@ const App = (function () {
   function pagerEl(page, totalPages, onChange) {
     const wrap = el('div', { class: 'pager' });
     const add = (label, target, active, disabled) => {
-      wrap.appendChild(el('button', { class: 'pager-btn' + (active ? ' active' : ''), disabled: disabled, onclick: () => { if (target !== page) onChange(target); } }, label));
+      const b = el('button', { class: 'pager-btn' + (active ? ' active' : ''), onclick: () => { if (target !== page) onChange(target); } }, label);
+      if (disabled) b.disabled = true;
+      wrap.appendChild(b);
     };
     add('‹ 上一页', page - 1, false, page <= 1);
     const nums = [...new Set([1, 2, 3, 4, 5, totalPages, page])].filter(n => n >= 1 && n <= totalPages).sort((a, b) => a - b);
@@ -691,7 +693,7 @@ const App = (function () {
       ),
       persons.length ? paginatedPersonsCard(user, persons, {
         headers: ['姓名', '性别', '年龄', '所犯罪行', '释放日期', '风险', '帮教服务', '操作'],
-        hint: (n, page, totalPages) => '共 ' + n + ' 名在册人员，第 ' + page + ' / ' + totalPages + ' 页（每页 20 条，前 5 页为完整档案，其余仅登记姓名）。',
+        hint: (n, page, totalPages) => '共 ' + n + ' 名在册人员，第 ' + page + ' / ' + totalPages + ' 页。',
         row: (p) => [p.name, p.gender, p.age, p.crime, fmtDate(p.releaseDate), riskTag(p.riskLevel),
           p.serviceType ? (p.serviceType === 'strict' ? tag('严格', 'tag-strict') : tag('灵活', 'tag-flexible')) : '-',
           el('button', { class: 'btn btn-outline btn-sm', onclick: () => personDetailModal(p.id) }, '详情')]
@@ -730,7 +732,7 @@ const App = (function () {
       el('div', { class: 'card-title' }, '📋 服刑档案管理'),
       paginatedPersonsCard(user, persons, {
         headers: ['姓名', '所犯罪行', '刑期', '释放日期', '狱内表现', '操作'],
-        hint: (n, page, totalPages) => '上传/更新服刑期间档案信息，保存后将同步传送至司法行政部门系统。共 ' + n + ' 名在册人员，第 ' + page + ' / ' + totalPages + ' 页（每页 20 条，前 5 页为完整档案，其余仅登记姓名）。',
+        hint: (n, page, totalPages) => '上传/更新服刑期间档案信息，保存后将同步传送至司法行政部门系统。共 ' + n + ' 名在册人员，第 ' + page + ' / ' + totalPages + ' 页。',
         row: (p) => [
           p.name, p.crime, p.sentence, fmtDate(p.releaseDate), p.prisonPerformance || '-',
           el('button', { class: 'btn btn-primary btn-sm', onclick: () => prisonUploadRecord(user, p) }, '上传/更新服刑档案')
@@ -1369,11 +1371,21 @@ const App = (function () {
     });
   }
 
+  const geoCache = {};
+  function fetchGeo(kind) {
+    const name = kind === 'china' ? 'china' : 'jiangxi';
+    if (geoCache[name]) return Promise.resolve(geoCache[name]);
+    return fetch('js/geo/' + name + '.json')
+      .then(r => { if (!r.ok) throw new Error('local geo missing'); return r.json(); })
+      .then(geo => { geoCache[name] = geo; return geo; })
+      .catch(() => fetch('https://geo.datav.aliyun.com/areas_v3/bound/' + (kind === 'china' ? '100000' : '360000') + '_full.json')
+        .then(r => { if (!r.ok) throw new Error('remote geo missing'); return r.json(); })
+        .then(geo => { geoCache[name] = geo; return geo; }));
+  }
   function drawMacroMap(kind) {
     if (!macroChart || !macroData) return;
-    const isChina = kind === 'china';
-    const mapName = isChina ? 'china' : 'jiangxi';
-    const data = macroData[isChina ? 'china' : 'jiangxi'] || {};
+    const mapName = kind === 'china' ? 'china' : 'jiangxi';
+    const data = macroData[kind === 'china' ? 'china' : 'jiangxi'] || {};
     const list = Object.keys(data).map(k => ({ name: k, value: data[k] }));
     const applyGeo = (geo) => {
       if (!echarts.getMap(mapName)) echarts.registerMap(mapName, geo);
@@ -1382,20 +1394,18 @@ const App = (function () {
         tooltip: { trigger: 'item', formatter: p => p.name + '：' + p.value + ' 人' },
         visualMap: { min: 0, max: maxV, left: 16, bottom: 16, calculable: true, inRange: { color: ['#e8f1ff', '#2563eb'] } },
         series: [{ type: 'map', map: mapName, roam: true, label: { show: true, fontSize: 10 }, emphasis: { label: { fontSize: 13, fontWeight: 'bold' } }, data: list }]
-      });
+      }, true);
     };
     const showFallback = () => {
       const box = document.getElementById('macroMapBox');
-      if (box) { box.innerHTML = ''; box.appendChild(el('p', { class: 'u-text-muted' }, '地图数据加载失败，请检查网络（下方省份明细仍可查看）。')); }
+      if (!box) return;
+      box.innerHTML = '';
+      const rows = Object.keys(data).map(k => [k, data[k]]);
+      box.appendChild(el('p', { class: 'u-text-muted' }, '地图加载失败，以下为' + (kind === 'china' ? '省份' : '江西各市') + '分布明细：'));
+      box.appendChild(table(['地区', '在册人数'], rows));
     };
     // 优先使用项目内置地图数据（同源、无跨域限制），失败时回退到在线数据源
-    fetch(isChina ? 'js/geo/china.json' : 'js/geo/jiangxi.json')
-      .then(r => { if (!r.ok) throw new Error('local geo missing'); return r.json(); })
-      .then(applyGeo)
-      .catch(() => fetch('https://geo.datav.aliyun.com/areas_v3/bound/' + (isChina ? '100000' : '360000') + '_full.json')
-        .then(r => { if (!r.ok) throw new Error('remote geo missing'); return r.json(); })
-        .then(applyGeo)
-        .catch(showFallback));
+    fetchGeo(kind).then(applyGeo).catch(showFallback);
   }
 
   function switchMacroMap(kind) {
