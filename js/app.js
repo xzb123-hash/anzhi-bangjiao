@@ -1,5 +1,5 @@
 /**
- * 安置帮教综合管理平台 - 主应用
+ * 安置帮教法治网络平台 - 主应用
  */
 const App = (function () {
   const R = {
@@ -219,7 +219,7 @@ const App = (function () {
       el('div', { class: 'logo-row' },
         el('div', { class: 'logo-badge' }, '⚖️'),
         el('div', {},
-          el('div', { class: 'platform-name' }, '安置帮教综合管理平台'),
+          el('div', { class: 'platform-name' }, '安置帮教法治网络平台'),
           el('div', { class: 'platform-sub' }, 'REHABILITATION ASSISTANCE SYSTEM · 智慧司法'),
           el('div', { class: 'platform-tags' },
             el('span', {}, '✓ 七方协同'),
