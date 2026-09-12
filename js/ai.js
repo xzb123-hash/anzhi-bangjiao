@@ -218,7 +218,7 @@ const AI = (function () {
         occupation: person.occupation || '',
         ruleScore: base.score
       };
-      const sys = '你是安置帮教领域的资深司法社工。请根据刑释人员信息给出风险评级建议，只输出 JSON：{"level":"high|low","score":0-100(整数), "analysis":"影响因素简要分析(100字内)", "advice":"帮教建议(150字内)"}';
+      const sys = '你是安置帮教领域的资深司法社工。请根据帮教服务端信息给出风险评级建议，只输出 JSON：{"level":"high|low","score":0-100(整数), "analysis":"影响因素简要分析(100字内)", "advice":"帮教建议(150字内)"}';
       const reply = await XiaoAn.request([
         { role: 'system', content: sys },
         { role: 'user', content: JSON.stringify(data) }

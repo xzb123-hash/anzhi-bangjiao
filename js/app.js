@@ -10,13 +10,13 @@ const App = (function () {
     hrss: { name: '人社部门', icon: '🏢', org: '人力资源和社会保障系统' },
     medicare: { name: '医疗保障部门', icon: '🏥', org: '医疗保障系统' },
     civil: { name: '民政部门', icon: '🏠', org: '民政系统' },
-    released: { name: '刑释人员', icon: '👤', org: '刑释人员端' }
+    released: { name: '帮教服务', icon: '👤', org: '帮教服务端' }
   };
   const RD = {
-    police: '上传刑释人员档案信息并传送至监狱系统',
+    police: '上传帮教服务端档案信息并传送至监狱系统',
     prison: '上传服刑档案、发送接送确认提醒至司法系统',
     judicial: '风险评级、招聘信息管理、政策发布、数据分析',
-    volunteer: '定期登录为刑释人员疑问进行专业答疑',
+    volunteer: '定期登录为帮教服务端疑问进行专业答疑',
     hrss: '就业与培训信息推送、劳动监察举报处理、就业创业与社会保障业务',
     medicare: '医疗保障政策发布与医保业务处理',
     civil: '低保/特困等社会救助政策发布与申请处理',
@@ -168,7 +168,7 @@ const App = (function () {
     else if (stats.employmentRate >= 30) tips.push('就业率一般，建议加强与人社部门合作，拓宽就业渠道。');
     else tips.push('就业率偏低，需重点加强就业培训与岗位推荐。');
     if (stats.migrationRate > 30) tips.push('异地居住率较高，建议加强跨区域信息协查与跟踪。');
-    if (stats.updateCompletion[0] && stats.updateCompletion[0].rate < 50) tips.push('1个月信息更新完成率偏低，建议督促刑释人员按时更新信息。');
+    if (stats.updateCompletion[0] && stats.updateCompletion[0].rate < 50) tips.push('1个月信息更新完成率偏低，建议督促帮教服务端按时更新信息。');
     if (stats.highRisk > stats.lowRisk) tips.push('高风险人员占比较高，建议增加走访频次与心理辅导资源投入。');
     return '💡 ' + tips.join(' ');
   }
@@ -246,9 +246,9 @@ const App = (function () {
         el('div', { class: 'notice-track' },
           el('span', { class: 'notice-item' }, '📌 司法部发布最新《安置帮教工作办法》，自2026年1月1日起施行'),
           el('span', { class: 'notice-divider' }, '◆'),
-          el('span', { class: 'notice-item' }, '📋 人社部联合发布2026年第一季度刑释人员专项招聘计划'),
+          el('span', { class: 'notice-item' }, '📋 人社部联合发布2026年第一季度帮教服务端专项招聘计划'),
           el('span', { class: 'notice-divider' }, '◆'),
-          el('span', { class: 'notice-item' }, '🤖 刑释人员端「小安」AI助手已上线，可咨询补助、社保与政策问题'),
+          el('span', { class: 'notice-item' }, '🤖 帮教服务端端「小安」AI助手已上线，可咨询补助、社保与政策问题'),
           el('span', { class: 'notice-divider' }, '◆'),
           el('span', { class: 'notice-item' }, '⚠️ 请各端口工作人员及时更新在册人员动态信息'),
           el('span', { class: 'notice-divider' }, '◆')
@@ -283,7 +283,7 @@ const App = (function () {
       )
     ));
 
-    // 七方端口布局：上3（公安+监狱+志愿者）- 中2（司法行政+刑释人员，大卡居中）- 下3（人社+医保+民政）
+    // 七方端口布局：上3（公安+监狱+志愿者）- 中2（司法行政+帮教服务端，大卡居中）- 下3（人社+医保+民政）
     const topRow = el('div', { class: 'portal-row top' });
     [['police', 1], ['prison', 2], ['volunteer', 3]].forEach(item => {
       topRow.appendChild(portalCard(item[0], R[item[0]], item[1]));
@@ -318,7 +318,7 @@ const App = (function () {
         ),
         el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
         el('div', { class: 'flow-node' },
-          el('div', { class: 'flow-icon' }, '👤'), el('div', { class: 'flow-text' }, '刑释人员'), el('div', { class: 'flow-desc' }, '定期更新')
+          el('div', { class: 'flow-icon' }, '👤'), el('div', { class: 'flow-text' }, '帮教服务端'), el('div', { class: 'flow-desc' }, '定期更新')
         ),
         el('div', { class: 'flow-arrow' }, el('div', { class: 'arrow-line' }), el('div', { class: 'arrow-head' })),
         el('div', { class: 'flow-node' },
@@ -347,7 +347,7 @@ const App = (function () {
 
     wrap.appendChild(el('div', { class: 'footer-note' },
       el('div', { style: 'margin-bottom:6px;' }, '✨ 提示：本平台为演示系统，数据存储于本地浏览器'),
-      el('div', {}, '刑释人员账号：released1 / released2 / released3，密码：123456 ｜ 其余端口账号同端口名，密码：123456')
+      el('div', {}, '帮教服务端账号：released1 / released2 / released3，密码：123456 ｜ 其余端口账号同端口名，密码：123456')
     ));
 
     // 数字滚动动画
@@ -444,7 +444,7 @@ const App = (function () {
     state.page = defaultPage(user.role);
     toast('登录成功，欢迎您，' + user.name);
     render();
-    // 仅刑释人员端在登录后自动弹出今日普法（每天每个用户仅弹一次）
+    // 仅帮教服务端端在登录后自动弹出今日普法（每天每个用户仅弹一次）
     if (user.role === 'released') setTimeout(() => showDailyLawOnce(user), 600);
   }
 
@@ -601,7 +601,7 @@ const App = (function () {
 
   function policeUploadPage(user) {
     const frag = el('div', { class: 'card' },
-      el('div', { class: 'card-title' }, '📁 上传刑释人员档案信息（传送至监狱系统）'),
+      el('div', { class: 'card-title' }, '📁 上传帮教服务端档案信息（传送至监狱系统）'),
       el('div', { class: 'hint' }, '说明：填写完成后点击"上传并传送至监狱"，档案将同步传送至监狱系统端口。'),
       el('div', { class: 'row' },
         el('div', { class: 'form-group' }, el('label', {}, '姓名 *'), el('input', { id: 'f_name', placeholder: '请输入姓名' })),
@@ -693,7 +693,7 @@ const App = (function () {
   function personsListPage(user, role) {
     const persons = Storage.getPersons();
     const frag = el('div', { class: 'card' },
-      el('div', { class: 'card-title' }, '📁 刑释人员档案列表',
+      el('div', { class: 'card-title' }, '📁 帮教服务端档案列表',
         role === 'police' ? el('button', { class: 'btn btn-primary btn-sm', onclick: () => { state.page = 'upload'; render(); } }, '⬆️ 上传档案') : null
       ),
       persons.length ? paginatedPersonsCard(user, persons, {
@@ -714,7 +714,7 @@ const App = (function () {
     const pending = reminders.filter(r => !r.confirmed);
     const frag = el('div', {});
     frag.appendChild(statGrid([
-      { value: persons.length, label: '在册刑释人员', cls: '' },
+      { value: persons.length, label: '在册帮教服务端', cls: '' },
       { value: reminders.length, label: '已发送提醒', cls: 'success' },
       { value: pending.length, label: '待司法确认', cls: 'danger' }
     ]));
@@ -796,7 +796,7 @@ const App = (function () {
 
   function sendReminderForm(user, persons) {
     const body = el('div', {},
-      el('div', { class: 'form-group' }, el('label', {}, '选择刑释人员 *'),
+      el('div', { class: 'form-group' }, el('label', {}, '选择帮教服务端 *'),
         el('select', { id: 'rm_person' }, ...persons.map(p => el('option', { value: p.id }, p.name + '（释放：' + fmtDate(p.releaseDate) + '）')))
       ),
       el('div', { class: 'form-group' }, el('label', {}, '提醒阶段 *'),
@@ -932,7 +932,7 @@ const App = (function () {
       el('div', { class: 'card-title' }, '💼 企业招聘信息管理',
         el('button', { class: 'btn btn-primary btn-sm', onclick: () => jobForm(user) }, '➕ 发布招聘信息')
       ),
-      el('div', { class: 'hint' }, '人社部门推送企业招聘信息，刑释人员端可实时查看。'),
+      el('div', { class: 'hint' }, '人社部门推送企业招聘信息，帮教服务端端可实时查看。'),
       jobs.length ? table(
         ['企业', '职位', '薪资', '地点', '要求', '发布日期', '操作'],
         jobs.map(j => [j.company, j.position, j.salary, j.location, j.requirement, fmtDate(j.publishDate),
@@ -1072,7 +1072,7 @@ const App = (function () {
     const frag = el('div', {});
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '🔗 部门业务申请信息共享'),
-      el('div', { class: 'hint' }, '人社、医保、民政等部门业务申请信息（刑释人员在线提交），供司法工作者实时掌握帮扶动态。'),
+      el('div', { class: 'hint' }, '人社、医保、民政等部门业务申请信息（帮教服务端在线提交），供司法工作者实时掌握帮扶动态。'),
       applications.length ? table(['人员', '申请类别', '情况说明', '联系电话', '状态', '提交时间'],
         applications.slice(0, 50).map(a => [a.personName, a.category,
           (a.note || '').length > 24 ? a.note.slice(0, 24) + '...' : (a.note || '-'),
@@ -1083,7 +1083,7 @@ const App = (function () {
     ));
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '❓ 志愿者答疑问题共享'),
-      el('div', { class: 'hint' }, '刑释人员向志愿者提出的心理/法律疑问，便于司法工作者了解人员动态。'),
+      el('div', { class: 'hint' }, '帮教服务端向志愿者提出的心理/法律疑问，便于司法工作者了解人员动态。'),
       questions.length ? table(['人员', '类别', '标题', '状态', '回复', '提交时间'],
         questions.slice(0, 50).map(q => [q.personName, q.category, q.title,
           q.status === 'replied' ? tag('已回复', 'tag-replied') : tag('待回复', 'tag-pending'),
@@ -1094,13 +1094,13 @@ const App = (function () {
     return frag;
   }
 
-  // ===== 刑释人员：相关法律 =====
+  // ===== 帮教服务端：相关法律 =====
   function releasedLawsPage(user) {
     const laws = Storage.getLaws();
     const frag = el('div', {});
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '📚 相关法律'),
-      el('div', { class: 'hint' }, '与刑释人员社会保障、安置帮教相关的法律法规原文，点击查看全文。')
+      el('div', { class: 'hint' }, '与帮教服务端社会保障、安置帮教相关的法律法规原文，点击查看全文。')
     ));
     laws.forEach(l => {
       frag.appendChild(el('div', { class: 'card card-plain law-item', onclick: () => showLawText(l) },
@@ -1162,7 +1162,7 @@ const App = (function () {
       el('div', { class: 'card-title' }, '🎓 技校培训信息管理',
         el('button', { class: 'btn btn-primary btn-sm', onclick: () => trainingForm(user) }, '➕ 发布培训信息')
       ),
-      el('div', { class: 'hint' }, '发布下属技校/就业训练中心的培训信息，供刑释人员查看报名。'),
+      el('div', { class: 'hint' }, '发布下属技校/就业训练中心的培训信息，供帮教服务端查看报名。'),
       trainings.length ? table(['学校/机构', '培训专业', '地点', '开班时间', '名额', '要求', '报名人数', '操作'],
         trainings.map(t => [t.school, t.major, t.location, t.startDate || '-', (t.quota || '-') + '人', t.requirement || '-',
           (t.signups || []).length + '人',
@@ -1206,7 +1206,7 @@ const App = (function () {
     const reports = Storage.getReports();
     const frag = el('div', { class: 'card' },
       el('div', { class: 'card-title' }, '📢 劳动监察举报处理'),
-      el('div', { class: 'hint' }, '刑释人员提交的劳动监察举报，请核实处理并及时反馈。'),
+      el('div', { class: 'hint' }, '帮教服务端提交的劳动监察举报，请核实处理并及时反馈。'),
       reports.length ? table(['举报人', '单位名称', '单位地址', '违法时间', '材料', '状态', '提交时间', '操作'],
         reports.map(r => [r.personName, r.company, r.address, r.time || '-', r.evidence ? '已上传' : '未上传',
           r.status === '待处理' ? tag('待处理', 'tag-pending') : r.status === '处理中' ? tag('处理中', 'tag-warning') : tag('已处理', 'tag-replied'),
@@ -1269,7 +1269,7 @@ const App = (function () {
     return frag;
   }
 
-  // ===== 刑释人员：政策地区切换 =====
+  // ===== 帮教服务端：政策地区切换 =====
   function regionSelectControl(user, p) {
     const region = (p && p.region) || '江西省·南昌市';
     return el('div', { class: 'region-row' },
@@ -1449,7 +1449,7 @@ const App = (function () {
     });
   }
 
-  // ===== 刑释人员端口 =====
+  // ===== 帮教服务端端口 =====
   function releasedDashboard(user) {
     const p = Storage.getPerson(user.personId);
     if (!p) return el('div', { class: 'card' }, el('p', {}, '未找到您的档案信息'));
@@ -1635,7 +1635,7 @@ const App = (function () {
     return frag;
   }
 
-  // ===== 刑释人员：技校培训 =====
+  // ===== 帮教服务端：技校培训 =====
   function renderTrainingSection(user) {
     const p = Storage.getPerson(user.personId);
     const trainings = Storage.getTrainings();
@@ -1653,7 +1653,7 @@ const App = (function () {
     );
   }
 
-  // ===== 刑释人员：违法举报 =====
+  // ===== 帮教服务端：违法举报 =====
   function releasedReportPage(user) {
     const p = Storage.getPerson(user.personId);
     const reports = Storage.getReportsByPerson(p.id);
@@ -1721,7 +1721,7 @@ const App = (function () {
     showModal('举报详情', body, { wide: true });
   }
 
-  // ===== 刑释人员：办事服务（生活困难 / 创业 / 社保） =====
+  // ===== 帮教服务端：办事服务（生活困难 / 创业 / 社保） =====
   function releasedHelpPage(user) {
     const person = Storage.getPerson(user.personId);
     const region = (person && person.region) || '江西省·南昌市';
@@ -1762,7 +1762,7 @@ const App = (function () {
     );
   }
 
-  // 刑释人员：在线提交部门业务申请（司法端信息共享可见）
+  // 帮教服务端：在线提交部门业务申请（司法端信息共享可见）
   function applyServiceModal(user, person, category, itemName) {
     const body = el('div', {},
       el('div', { class: 'hint' }, '申请事项：' + category + '（' + (itemName || '') + '）。提交后司法行政部门与对应保障部门可查看，办理流程以当地部门要求为准。'),
@@ -1795,7 +1795,7 @@ const App = (function () {
     const frag = el('div', {});
     frag.appendChild(el('div', { class: 'card' },
       el('div', { class: 'card-title' }, onlyPending ? '❓ 待回复疑问' : '📋 全部疑问'),
-      el('div', { class: 'hint' }, '志愿者每周定期登录，对刑释人员的疑问进行专业答疑，请尽量在一周内完成回复。'),
+      el('div', { class: 'hint' }, '志愿者每周定期登录，对帮教服务端的疑问进行专业答疑，请尽量在一周内完成回复。'),
       qs.length ? table(
         ['人员', '类别', '标题', '内容', '状态', '提交时间', '操作'],
         qs.map(q => [q.personName, q.category, q.title, q.content.length > 20 ? q.content.slice(0, 20) + '...' : q.content,
