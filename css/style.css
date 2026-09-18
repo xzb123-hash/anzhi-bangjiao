@@ -251,6 +251,24 @@ button:disabled, input:disabled, select:disabled, textarea:disabled {
   margin: 0 auto 24px;
   animation: fadeInDown var(--duration-slow) var(--ease-enter);
 }
+.app-download-link {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 10px 17px;
+  border: 1px solid rgba(255,255,255,0.42);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.13);
+  color: #fff;
+  font-size: var(--font-base);
+  font-weight: 600;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  transition: background var(--duration-fast), transform var(--duration-fast);
+}
+.app-download-link:hover {
+  background: rgba(255,255,255,0.24);
+  transform: translateY(-2px);
+}
 .portal-page .header .logo-badge {
   display: inline-flex;
   align-items: center;
@@ -1992,7 +2010,8 @@ select {
 /* 小屏手机 */
 @media (max-width: 560px) {
   .portal-page { padding: 24px 14px 34px; }
-  .logo-row { align-items: flex-start; }
+  .logo-row { align-items: flex-start; flex-wrap: wrap; }
+  .app-download-link { margin-left: auto; }
   .main-slogan { font-size: 31px; letter-spacing: 0; }
   .slogan-line { align-items: flex-start; font-size: var(--font-sm); }
 

@@ -13,7 +13,7 @@ const App = (function () {
     released: { name: '帮教服务', icon: '👤', org: '帮教服务端' }
   };
   const RD = {
-    police: '上传帮教服务端档案信息并传送至监狱系统',
+    police: '上传服刑人员个人档案信息并传送至监狱系统',
     prison: '上传服刑档案、发送接送确认提醒至司法系统',
     judicial: '风险评级、招聘信息管理、政策发布、数据分析',
     volunteer: '定期登录为帮教服务端疑问进行专业答疑',
@@ -227,7 +227,13 @@ const App = (function () {
             el('span', {}, '✓ 小安AI助手'),
             el('span', {}, '✓ 全程可追溯')
           )
-        )
+        ),
+        el('a', {
+          class: 'app-download-link',
+          href: 'downloads/guituyou-v1.1.0.apk',
+          download: '归途有法-v1.1.0.apk',
+          'aria-label': '下载归途有法安卓版 APP'
+        }, '⬇ 下载安卓版 APP')
       ),
       el('div', { class: 'slogan-wrap' },
         el('h1', { class: 'main-slogan' }, '让每一次回归，都被温柔以待'),
@@ -601,7 +607,7 @@ const App = (function () {
 
   function policeUploadPage(user) {
     const frag = el('div', { class: 'card' },
-      el('div', { class: 'card-title' }, '📁 上传帮教服务端档案信息（传送至监狱系统）'),
+      el('div', { class: 'card-title' }, '📁 上传服刑人员个人档案信息（传送至监狱系统）'),
       el('div', { class: 'hint' }, '说明：填写完成后点击"上传并传送至监狱"，档案将同步传送至监狱系统端口。'),
       el('div', { class: 'row' },
         el('div', { class: 'form-group' }, el('label', {}, '姓名 *'), el('input', { id: 'f_name', placeholder: '请输入姓名' })),
